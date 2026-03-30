@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Repository
 public class UserRepository {
 
+    // 使用 Map 模拟数据库存储
     private final Map<Long, User> userStorage = new ConcurrentHashMap<>();
     private Long nextId = 1L;
 
@@ -54,7 +55,7 @@ public class UserRepository {
      * @param id 用户 ID
      * @return 是否删除成功
      */
-    public boolean delete(Long id) {
+    public boolean deleteById(Long id) {
         return userStorage.remove(id) != null;
     }
 

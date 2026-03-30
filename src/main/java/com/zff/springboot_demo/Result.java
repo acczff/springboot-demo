@@ -56,6 +56,14 @@ public class Result<T> {
     public static <T> Result<T> error(String message) {
         return new Result<T>(500, message, null);
     }
+
+    /**
+     * 错误响应
+     */
+    public static <T> Result<T> error(Integer code, String message) {
+        return new Result<T>(code, message, null);
+    }
+
     /**
      * 错误响应（指定状态码）
      */

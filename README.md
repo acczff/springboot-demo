@@ -1,13 +1,18 @@
 # Spring Boot Demo 项目
 
-一个基于 Spring Boot 3.5.13 的演示项目，展示了基本的 REST API 开发模式。
+> **标签**: `Spring Boot` `Java 21` `REST API` `用户管理` `后端开发`  
+> **更新日期**: 2026-03-30  
+> **版本**: v1.0.0
+
+一个基于 Spring Boot 3.5.13 的演示项目，展示了完整的 REST API 开发模式，包含用户管理功能。
 
 ## 项目概述
 
-这是一个简单的 Spring Boot 演示项目，包含以下功能：
-- 健康检查接口
-- 用户实体模型
-- 统一响应格式
+这是一个功能完整的 Spring Boot 演示项目，包含以下功能：
+- ✅ 健康检查接口
+- ✅ 用户管理功能（增删改查）
+- ✅ 统一响应格式封装
+- ✅ 分层架构设计（Controller-Service-Repository）
 
 ## 技术栈
 
@@ -25,6 +30,10 @@ src/main/java/com/zff/springboot_demo/
 ├── HealthController.java             # 健康检查控制器
 ├── Result.java                       # 统一响应结果封装
 └── user/
+    ├── controller/
+    │   └── UserController.java       # 用户控制器（新增）
+    ├── service/
+    │   └── UserService.java          # 用户业务层（新增）
     ├── entity/
     │   └── User.java                 # 用户实体类
     └── repository/
@@ -66,16 +75,22 @@ mvn exec:java -Dexec.mainClass="com.zff.springboot_demo.SpringbootDemoApplicatio
 项目启动后，访问以下接口：
 
 - **健康检查**: `GET http://localhost:8080/api/health`
+- **获取所有用户**: `GET http://localhost:8080/api/users`
+- **根据ID获取用户**: `GET http://localhost:8080/api/users/{id}`
 
 响应示例：
 ```json
 {
   "code": 200,
-  "message": "健康检查成功",
-  "data": {
-    "status": "ok",
-    "timestamp": 1672531200000
-  }
+  "message": "查询成功",
+  "data": [
+    {
+      "id": 1,
+      "username": "张三",
+      "email": "zhangsan@example.com",
+      "createTime": 1672531200000
+    }
+  ]
 }
 ```
 
@@ -89,6 +104,22 @@ mvn exec:java -Dexec.mainClass="com.zff.springboot_demo.SpringbootDemoApplicatio
 - **响应**: 
   - `status`: 应用状态（ok/error）
   - `timestamp`: 当前时间戳
+
+### 用户管理接口
+
+#### 获取所有用户
+- **URL**: `/api/users`
+- **方法**: GET
+- **描述**: 获取系统中所有用户信息
+- **响应**: 用户列表
+
+#### 根据ID获取用户
+- **URL**: `/api/users/{id}`
+- **方法**: GET
+- **参数**: 
+  - `id`: 用户ID（路径参数）
+- **描述**: 根据用户ID获取特定用户信息
+- **响应**: 用户对象或404错误
 
 ## 开发指南
 
