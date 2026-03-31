@@ -1,0 +1,19 @@
+spring:
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456  # ⚠️ 替换为您的 MySQL 密码
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: update  # 自动更新表结构（开发环境使用）
+    show-sql: true      # 控制台显示 SQL（学习用）
+    properties:
+      hibernate:
+        format_sql: true  # 格式化 SQL 输出
+
+server:
+  port: 8080  # 服务端口

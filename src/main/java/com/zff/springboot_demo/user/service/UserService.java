@@ -21,8 +21,8 @@ public class UserService {
      * @param id 用户 ID
      * @return 用户对象
      */
-    public User findById(Long id) {
-        return userRepository.findById(id);
+    public User findById(long id) {
+        return userRepository.findById(id).orElse(null);
     }
 
     /**
@@ -48,13 +48,13 @@ public class UserService {
      * @param user 用户对象
      * @return 更新后的用户对象，不存在返回 null
      */
-    public User updateUser(Long id, User user) {
-        User existingUser = userRepository.findById(id);
-        if (existingUser == null) {
-            return null;
-        }
-        user.setId(id);
-        return userRepository.save(user);
+    public User updateUser(long id, User user) {
+        return userRepository.findById(id)
+                .map(existingUser -> {
+                    user.setId(id);
+                    return userRepository.save(user);
+                })
+                .orElse(null);
     }
 
     /**
@@ -63,7 +63,11 @@ public class UserService {
      * @return 是否删除成功
      */
 
-    public boolean deleteUser(Long id) {
-        return userRepository.deleteById(id);
+    public boolean deleteUser(long id) {
+        if(!userRepository.existsById(id)) {
+            return false;
+        }
+        userRepository.deleteById(id);
+        return true;
     }
 }

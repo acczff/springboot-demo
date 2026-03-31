@@ -1,8 +1,8 @@
 # Spring Boot Demo 项目
 
-> **标签**: `Spring Boot` `Java 21` `REST API` `用户管理` `后端开发`  
-> **更新日期**: 2026-03-30  
-> **版本**: v1.0.0
+> **标签**: `Spring Boot` `Java 21` `Spring Data JPA` `MySQL` `用户管理` `YAML配置`  
+> **更新日期**: 2026-03-31  
+> **版本**: v1.1.0
 
 一个基于 Spring Boot 3.5.13 的演示项目，展示了完整的 REST API 开发模式，包含用户管理功能。
 
@@ -13,6 +13,7 @@
 - ✅ 用户管理功能（增删改查）
 - ✅ 统一响应格式封装
 - ✅ 分层架构设计（Controller-Service-Repository）
+- ✅ MySQL 持久化存储（JPA）
 
 ## 技术栈
 
@@ -20,6 +21,8 @@
 - **Java版本**: 21
 - **构建工具**: Maven
 - **Web框架**: Spring Web
+- **数据访问**: Spring Data JPA
+- **数据库**: MySQL
 - **测试框架**: Spring Boot Test
 
 ## 项目结构
@@ -162,11 +165,26 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 
 ### 应用配置
 
-配置文件位于 `src/main/resources/application.properties`
+配置文件位于 `src/main/resources/application.yml`
 
-### 数据库配置（待扩展）
+### 数据库配置
 
-当前项目使用内存数据库，可根据需要配置 MySQL、PostgreSQL 等数据库。
+当前项目已配置 MySQL 连接与 JPA 参数，默认示例配置如下：
+
+- `spring.datasource.url`
+- `spring.datasource.username`
+- `spring.datasource.password`
+- `spring.jpa.hibernate.ddl-auto`
+
+请根据本地环境修改数据库地址、账号和密码。
+
+## 今日更新（2026-03-31）
+
+- 引入 `spring-boot-starter-data-jpa` 与 `mysql-connector-j` 依赖。
+- 将用户仓储层从内存 `Map` 实现切换为 `JpaRepository`。
+- 为 `User` 实体添加 JPA 注解并映射数据库表 `users`。
+- 调整用户服务层对 `Optional` 与删除逻辑的处理。
+- 将配置文件从 `application.properties` 迁移为 `application.yml`，补充 MySQL 与 JPA 配置。
 
 ## 贡献指南
 
