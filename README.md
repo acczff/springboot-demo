@@ -1,8 +1,8 @@
 # Spring Boot Demo 项目
 
-> **标签**: `Spring Boot` `Java 21` `Spring Data JPA` `MySQL` `用户管理` `YAML配置`  
-> **更新日期**: 2026-03-31  
-> **版本**: v1.1.0
+> **标签**: `Spring Boot` `Java 21` `Spring Data JPA` `MySQL` `用户管理` `登录认证` `BCrypt` `YAML配置`  
+> **更新日期**: 2026-04-02  
+> **版本**: v1.2.0
 
 一个基于 Spring Boot 3.5.13 的演示项目，展示了完整的 REST API 开发模式，包含用户管理功能。
 
@@ -11,6 +11,7 @@
 这是一个功能完整的 Spring Boot 演示项目，包含以下功能：
 - ✅ 健康检查接口
 - ✅ 用户管理功能（增删改查）
+- ✅ 账号密码登录认证
 - ✅ 统一响应格式封装
 - ✅ 分层架构设计（Controller-Service-Repository）
 - ✅ MySQL 持久化存储（JPA）
@@ -23,6 +24,8 @@
 - **Web框架**: Spring Web
 - **数据访问**: Spring Data JPA
 - **数据库**: MySQL
+- **密码加密**: jBCrypt
+- **连接池**: HikariCP
 - **测试框架**: Spring Boot Test
 
 ## 项目结构
@@ -32,6 +35,16 @@ src/main/java/com/zff/springboot_demo/
 ├── SpringbootDemoApplication.java    # 应用启动类
 ├── HealthController.java             # 健康检查控制器
 ├── Result.java                       # 统一响应结果封装
+├── controller/
+│   └── AuthController.java           # 认证控制器（登录）
+├── dto/
+│   ├── login/
+│   │   ├── LoginRequest.java         # 登录请求 DTO
+│   │   └── LoginResponse.java        # 登录响应 DTO
+│   └── user/
+│       └── UserInfoDTO.java          # 用户信息 DTO
+├── util/
+│   └── PasswordEncoder.java          # BCrypt 密码工具
 └── user/
     ├── controller/
     │   └── UserController.java       # 用户控制器（新增）
@@ -80,6 +93,7 @@ mvn exec:java -Dexec.mainClass="com.zff.springboot_demo.SpringbootDemoApplicatio
 - **健康检查**: `GET http://localhost:8080/api/health`
 - **获取所有用户**: `GET http://localhost:8080/api/users`
 - **根据ID获取用户**: `GET http://localhost:8080/api/users/{id}`
+- **用户登录**: `POST http://localhost:8080/api/auth/login`
 
 响应示例：
 ```json
@@ -123,6 +137,36 @@ mvn exec:java -Dexec.mainClass="com.zff.springboot_demo.SpringbootDemoApplicatio
   - `id`: 用户ID（路径参数）
 - **描述**: 根据用户ID获取特定用户信息
 - **响应**: 用户对象或404错误
+
+### 认证接口
+
+#### 登录
+- **URL**: `/api/auth/login`
+- **方法**: POST
+- **描述**: 根据账号密码进行登录校验（当前按用户名查询）
+- **请求体**:
+
+```json
+{
+  "account": "zhangsan",
+  "password": "123456"
+}
+```
+
+- **成功响应示例**:
+
+```json
+{
+  "code": 200,
+  "message": "登录成功",
+  "data": {
+    "token": "token-1712059200000",
+    "userId": 1,
+    "username": "zhangsan",
+    "email": "zhangsan@example.com"
+  }
+}
+```
 
 ## 开发指南
 
@@ -174,6 +218,9 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 - `spring.datasource.url`
 - `spring.datasource.username`
 - `spring.datasource.password`
+- `spring.datasource.hikari.maximum-pool-size`
+- `spring.datasource.hikari.minimum-idle`
+- `spring.datasource.hikari.connection-timeout`
 - `spring.jpa.hibernate.ddl-auto`
 
 请根据本地环境修改数据库地址、账号和密码。
@@ -185,6 +232,14 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 - 为 `User` 实体添加 JPA 注解并映射数据库表 `users`。
 - 调整用户服务层对 `Optional` 与删除逻辑的处理。
 - 将配置文件从 `application.properties` 迁移为 `application.yml`，补充 MySQL 与 JPA 配置。
+
+## 今日更新（2026-04-02）
+
+- 新增认证控制器 `AuthController`，提供 `POST /api/auth/login` 登录接口。
+- 新增 `LoginRequest`、`LoginResponse` 和 `UserInfoDTO` 等认证/用户数据传输对象。
+- 新增 `PasswordEncoder` 工具类，引入 `jBCrypt` 依赖用于密码加密与校验。
+- 在 `UserService` 中新增按用户名查询方法，登录逻辑改为数据库校验。
+- 在 `application.yml` 中新增 Hikari 连接池配置，完善数据源连接参数。
 
 ## 贡献指南
 

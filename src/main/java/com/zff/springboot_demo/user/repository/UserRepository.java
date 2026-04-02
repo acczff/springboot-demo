@@ -31,4 +31,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     User findByEmail(String email);
 
+//    // 继承 JpaRepository 后自动获得的方法
+//    findById(Long id)        // 根据 ID 查询
+//    findAll()                // 查询所有
+//    save(User user)          // 保存（新增或更新）
+//    deleteById(Long id)      // 根据 ID 删除
+//    existsById(Long id)      // 判断是否存在
+//    count()                  // 统计总数
+
 }

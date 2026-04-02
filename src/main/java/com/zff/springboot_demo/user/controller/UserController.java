@@ -75,12 +75,12 @@ public class UserController {
      * @param id 用户 ID
      * @return 删除结果
      */
-    @DeleteMapping("/{id}")
-    public Result<Void> deleteUser(@PathVariable Long id) {
-        boolean deleted =  userService.deleteUser(id);
-        if (!deleted) {
-            Result.error(404,"用户不存在");
-        }
-        return Result.success("删除成功",null);
-    }
+//    @DeleteMapping("/{id}")
+//    public Result<Void> deleteUser(@PathVariable Long id) {
+//        boolean deleted =  userService.deleteUser(id);
+//        if (!deleted) {
+//            return Result.error(404,"用户不存在");
+//        }
+//        return Result.success("删除成功",null);
+//    }
 }

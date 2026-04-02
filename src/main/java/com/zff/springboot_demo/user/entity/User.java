@@ -22,6 +22,9 @@ public class User {
     @Column(name = "username", nullable = false, length = 50)
     private String username;            // 用户名字
 
+    @Column(name = "password", nullable = false, length = 100)
+    private String password;            // 用户密码
+
     @Column(name = "email", nullable = false,length = 100)
     private String email;               // 用户邮箱
 
@@ -42,31 +45,30 @@ public class User {
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     public String getUsername() {
         return username;
     }
-
     public void setUsername(String username) {
         this.username = username;
     }
-
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
-
     public Long getCreateTime() {
         return createTime;
     }
-
     public void setCreateTime(Long createTime) {
         this.createTime = createTime;
     }
