@@ -14,6 +14,8 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         // 允许的源
         config.addAllowedOrigin("http://localhost:5173");
+//        config.addAllowedOrigin("http://127.0.0.1:5500");
+
         // 允许的请求方法
         config.addAllowedMethod("*");
         // 允许的请求头

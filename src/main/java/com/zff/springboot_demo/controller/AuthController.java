@@ -43,7 +43,7 @@ public class AuthController {
 
         // 验证成功返回数据
         LoginResponse response = new LoginResponse();
-        response.setToken("token-" + System.currentTimeMillis());
+        response.setToken("token-" + user.getId() + "-" + System.currentTimeMillis());
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
@@ -58,18 +58,37 @@ public class AuthController {
     @GetMapping("/me")
     public Result<LoginResponse> me(@RequestHeader("Authorization") String token){
         if(token == null || !token.startsWith("Bearer token-")){
-            return Result.error(401,"未登录或 token 失效");
+            return Result.error(404,"未登录或 token 失效");
         }
-        Long userId = 1L;
-        User user = userService.findById(userId);
-        if(user == null){
-            return Result.error(404,"用户不存在");
+        try {
+            // 2. 尝试无情拆解 Token
+            String tokenValue = token.replace("Bearer ", "");
+            String[] parts = tokenValue.split("-");
+
+            if (parts.length < 2) {
+                return Result.error(404, "Token 被篡改");
+            }
+
+            // 提取用户 ID
+            Long userId = Long.parseLong(parts[1]);
+            User user = userService.findById(userId);
+
+            // 3. 查无此人，说明原来登录过但号被库里删了，必须返回 401 让他回登录页，而不是 404
+            if(user == null){
+                return Result.error(404, "账号已失效，请重新登录");
+            }
+
+            // 4. 一切顺利，成功交差
+            LoginResponse response = new LoginResponse();
+            response.setUserId(user.getId());
+            response.setUsername(user.getUsername());
+            response.setEmail(user.getEmail());
+            return Result.success("获取成功", response);
+
+        } catch (Exception e) {
+            // 5. 终极兜底：比如强转数字报错，绝不崩掉报 500，而是温柔地返回 401
+            return Result.error(404, "Token 解析异常，请重新登录");
         }
-        LoginResponse response = new LoginResponse();
-        response.setUserId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setEmail(user.getEmail());
-        return Result.success("获取成功",response);
     }
 
     /**
