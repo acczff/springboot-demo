@@ -4,6 +4,9 @@ import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,9 +26,14 @@ public class UserController {
      * @return 用户列表
      */
     @GetMapping
-    public Result<List<User>> findAll() {
-        List<User> users = userService.findAll();
-        return Result.success("查询成功", users);
+    public Result<Page<User>> findAll(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String keyword
+    ) {
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+        Page<User> page = userService.findAll(keyword, pageable);  // ← 传 keyword
+        return Result.success("查询成功", page);
     }
 
     /**

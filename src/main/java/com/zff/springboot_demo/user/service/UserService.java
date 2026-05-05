@@ -3,6 +3,8 @@ package com.zff.springboot_demo.user.service;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,10 +40,19 @@ public class UserService {
      * 查找所有用户
      * @return 用户列表
      */
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public Page<User> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
 
+
+    public Page<User> findAll(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return userRepository.findAll(pageable);  // 没有关键词，查全部
+        }
+        return userRepository.findByUsernameContainingOrEmailContaining(
+                keyword, keyword, pageable
+        );
+    }
     /**
      * 创建用户
      * @param user 用户对象
@@ -60,8 +71,12 @@ public class UserService {
     public User updateUser(Long id, User user) {
         return userRepository.findById(id)
                 .map(existingUser -> {
-                    user.setId(id);
-                    return userRepository.save(user);
+                    existingUser.setUsername(user.getUsername());
+                    existingUser.setEmail(user.getEmail());
+                    if (user.getPassword() != null && !user.getPassword().isBlank()) {
+                        existingUser.setPassword(user.getPassword());
+                    }
+                    return userRepository.save(existingUser);
                 })
                 .orElse(null);
     }

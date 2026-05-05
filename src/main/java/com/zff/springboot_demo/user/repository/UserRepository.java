@@ -1,6 +1,9 @@
 package com.zff.springboot_demo.user.repository;
 
 import com.zff.springboot_demo.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -30,6 +33,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 用户对象
      */
     User findByEmail(String email);
+
+    Page<User> findByUsernameContainingOrEmailContaining(String username, String email, Pageable pageable);
 
 //    // 继承 JpaRepository 后自动获得的方法
 //    findById(Long id)        // 根据 ID 查询
