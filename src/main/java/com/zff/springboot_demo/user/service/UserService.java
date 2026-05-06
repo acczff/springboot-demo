@@ -1,5 +1,7 @@
 package com.zff.springboot_demo.user.service;
 
+import com.zff.springboot_demo.role.entity.Role;
+import com.zff.springboot_demo.role.repository.RoleRepository;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     /**
      * 根据 ID 查找用户
@@ -93,5 +98,21 @@ public class UserService {
         }
         userRepository.deleteById(id);
         return true;
+    }
+
+    // 查询用户的角色列表
+    public List<Role> getUserRoles(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return null;
+        return user.getRoles();
+    }
+
+    // 给用户绑定角色（传入角色 ID 列表，覆盖原有绑定）
+    public User assignRoles(Long userId, List<Long> roleIds) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return null;
+        List<Role> roles = roleRepository.findAllById(roleIds);
+        user.setRoles(roles);
+        return userRepository.save(user);
     }
 }

@@ -1,6 +1,7 @@
 package com.zff.springboot_demo.user.controller;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,22 @@ public class UserController {
         }else {
             return Result.success("查询成功", user);
         }
+    }
+
+    // 查询用户角色
+    @GetMapping("/{id}/roles")
+    public Result<List<Role>> getUserRoles(@PathVariable Long id) {
+        List<Role> roles = userService.getUserRoles(id);
+        if (roles == null) return Result.error(404, "用户不存在");
+        return Result.success("查询成功", roles);
+    }
+
+    // 绑定用户角色
+    @PutMapping("/{id}/roles")
+    public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
+        User user = userService.assignRoles(id, roleIds);
+        if (user == null) return Result.error(404, "用户不存在");
+        return Result.success("角色绑定成功", user);
     }
 
     /**

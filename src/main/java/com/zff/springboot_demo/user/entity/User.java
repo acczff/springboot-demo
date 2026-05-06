@@ -1,6 +1,11 @@
 package com.zff.springboot_demo.user.entity;
 
+import com.zff.springboot_demo.role.entity.Role;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 用户实体类
@@ -22,6 +27,7 @@ public class User {
     @Column(name = "username", nullable = false, length = 50)
     private String username;            // 用户名字
 
+    @JsonIgnore
     @Column(name = "password", nullable = false, length = 100)
     private String password;            // 用户密码
 
@@ -30,6 +36,14 @@ public class User {
 
     @Column(name = "create_time", nullable = false )
     private Long createTime;            //  创建时间
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_roles",
+            joinColumns =  @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private List<Role> roles = new ArrayList<>();
 
     public User() {
     }
@@ -71,5 +85,11 @@ public class User {
     }
     public void setCreateTime(Long createTime) {
         this.createTime = createTime;
+    }
+    public List<Role> getRoles() {
+        return roles;
+    }
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 }
