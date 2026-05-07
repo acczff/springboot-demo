@@ -25,6 +25,9 @@ public class Menu {
     @Column(name = "sort")
     private Integer sort;
 
+    @Column(name = "required_role", length = 50)
+    private String requiredRole;
+
     @Transient
     private List<Menu> children = new ArrayList<>();
 
@@ -77,4 +80,8 @@ public class Menu {
     public void setChildren(List<Menu> children) {
         this.children = children;
     }
+
+    public String getRequiredRole() { return requiredRole; }
+
+    public void setRequiredRole(String requiredRole) { this.requiredRole = requiredRole; }
 }

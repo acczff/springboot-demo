@@ -16,16 +16,22 @@ public class MenuService {
         this.menuRepository = menuRepository;
     }
 
-    public List<Menu> getMenuTree() {
-        // 从数据库取出所有菜单（平铺列表）
+    public List<Menu> getMenuTree(List<String> userRoles) {
         List<Menu> allMenus = menuRepository.findAll();
-        // 第一步：找出所有根节点（parentId 为 null）
-        List<Menu> roots = allMenus.stream()
+
+        // 过滤：requiredRole 为 null（所有人可见）或用户拥有该角色
+        List<Menu> visibleMenus = allMenus.stream()
+                .filter(m -> m.getRequiredRole() == null
+                        || userRoles.contains(m.getRequiredRole()))
+                .toList();
+
+        // 组装树
+        List<Menu> roots = visibleMenus.stream()
                 .filter(m -> m.getParentId() == null)
                 .toList();
-        // 第二步：给每个根节点找子菜单
+
         for (Menu root : roots) {
-            List<Menu> children = allMenus.stream()
+            List<Menu> children = visibleMenus.stream()
                     .filter(m -> root.getId().equals(m.getParentId()))
                     .toList();
             root.setChildren(children);

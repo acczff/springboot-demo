@@ -3,11 +3,14 @@ package com.zff.springboot_demo.controller;
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.dto.login.LoginRequest;
 import com.zff.springboot_demo.dto.login.LoginResponse;
+import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.util.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 认证控制器
@@ -80,9 +83,13 @@ public class AuthController {
 
             // 4. 一切顺利，成功交差
             LoginResponse response = new LoginResponse();
-            response.setUserId(user.getId());
+            response.setUserId(userId);
             response.setUsername(user.getUsername());
             response.setEmail(user.getEmail());
+            List<String> roleNames = user.getRoles().stream()
+                    .map(Role::getName)
+                    .collect(java.util.stream.Collectors.toList());
+            response.setRoles(roleNames);
             return Result.success("获取成功", response);
 
         } catch (Exception e) {

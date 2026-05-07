@@ -1,5 +1,7 @@
 package com.zff.springboot_demo.dto.login;
 
+import java.util.List;
+
 /**
  * 登录响应 DTO
  * 用于返回登录成功后的数据
@@ -25,6 +27,8 @@ public class LoginResponse {
      */
     private String email;
 
+    //动态路由
+    private List<String> roles;
     //默认构造
     public LoginResponse() {}
 
@@ -45,6 +49,8 @@ public class LoginResponse {
     public void setUsername(String username) {this.username = username;}
     public String getEmail() {return email;}
     public void setEmail(String email) {this.email = email;}
+    public List<String> getRoles() { return roles; }
+    public void setRoles(List<String> roles) { this.roles = roles; }
 
 }
 
