@@ -1,5 +1,8 @@
 package com.zff.springboot_demo.role.entity;
 
+import com.zff.springboot_demo.permission.entity.Permission;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.persistence.*;
 
 @Entity
@@ -16,6 +19,13 @@ public class Role {
     @Column(name = "description", length = 200)
     private String description;
 
+    @ManyToMany
+    @JoinTable(
+            name = "role_permissions",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private List<Permission> permissions = new ArrayList<>();
     public Role(){}
 
     public Role(Long id, String name, String description) {
@@ -46,5 +56,13 @@ public class Role {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<Permission> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(List<Permission> permissions) {
+        this.permissions = permissions;
     }
 }

@@ -1,141 +1,115 @@
 # Spring Boot Demo 项目
 
-> **标签**: `Spring Boot` `Java 21` `Spring Data JPA` `MySQL` `用户管理` `登录认证` `BCrypt` `YAML配置`  
-> **更新日期**: 2026-04-02  
-> **版本**: v1.2.0
+> **标签**: `Spring Boot` `Java 21` `Spring Data JPA` `MySQL` `RBAC` `用户管理` `角色权限` `菜单管理` `登录认证` `BCrypt`  
+> **更新日期**: 2026-05-07  
+> **版本**: v2.0.0
 
-一个基于 Spring Boot 3.5.13 的演示项目，展示了完整的 REST API 开发模式，包含用户管理功能。
+一个基于 Spring Boot 3.x 的后台管理系统后端，实现了完整的 RBAC（基于角色的访问控制）权限体系。
 
-## 项目概述
+## 项目功能
 
-这是一个功能完整的 Spring Boot 演示项目，包含以下功能：
-- ✅ 健康检查接口
-- ✅ 用户管理功能（增删改查）
-- ✅ 账号密码登录认证
-- ✅ 统一响应格式封装
-- ✅ 分层架构设计（Controller-Service-Repository）
-- ✅ MySQL 持久化存储（JPA）
+- ✅ 用户管理（增删改查、分页、关键词搜索）
+- ✅ 账号密码登录认证（BCrypt 加密）
+- ✅ Token 拦截器（AuthInterceptor）
+- ✅ 角色管理（CRUD）
+- ✅ 权限管理（CRUD）
+- ✅ 菜单管理（树形结构）
+- ✅ 用户角色绑定（@ManyToMany）
+- ✅ 角色权限绑定（@ManyToMany）
+- ✅ 统一响应格式封装（Result<T>）
+- ✅ 分层架构设计（Controller-Service-Repository-Entity）
 
 ## 技术栈
 
-- **框架**: Spring Boot 3.5.13
+- **框架**: Spring Boot 3.x
 - **Java版本**: 21
 - **构建工具**: Maven
-- **Web框架**: Spring Web
 - **数据访问**: Spring Data JPA
-- **数据库**: MySQL
+- **数据库**: MySQL 9.x
 - **密码加密**: jBCrypt
 - **连接池**: HikariCP
-- **测试框架**: Spring Boot Test
+
+## 数据库表结构
+
+```
+users          — 用户表
+roles          — 角色表
+permissions    — 权限表
+menus          — 菜单表
+user_roles     — 用户角色中间表（多对多）
+role_permissions — 角色权限中间表（多对多）
+```
 
 ## 项目结构
 
 ```
 src/main/java/com/zff/springboot_demo/
-├── SpringbootDemoApplication.java    # 应用启动类
-├── HealthController.java             # 健康检查控制器
-├── Result.java                       # 统一响应结果封装
-├── controller/
-│   └── AuthController.java           # 认证控制器（登录）
-├── dto/
-│   ├── login/
-│   │   ├── LoginRequest.java         # 登录请求 DTO
-│   │   └── LoginResponse.java        # 登录响应 DTO
-│   └── user/
-│       └── UserInfoDTO.java          # 用户信息 DTO
-├── util/
-│   └── PasswordEncoder.java          # BCrypt 密码工具
-└── user/
-    ├── controller/
-    │   └── UserController.java       # 用户控制器（新增）
-    ├── service/
-    │   └── UserService.java          # 用户业务层（新增）
-    ├── entity/
-    │   └── User.java                 # 用户实体类
-    └── repository/
-        └── UserRepository.java       # 用户数据访问层
+├── SpringbootDemoApplication.java
+├── Result.java                        # 统一响应封装
+├── config/
+│   └── WebMvcConfig.java              # 拦截器注册
+├── interceptor/
+│   └── AuthInterceptor.java           # Token 鉴权拦截器
+├── auth/
+│   └── controller/AuthController.java # 登录/退出/当前用户
+├── user/                              # 用户模块（四层）
+├── role/                              # 角色模块（四层）
+├── permission/                        # 权限模块（四层）
+└── menu/                              # 菜单模块（四层）
 ```
 
 ## 快速开始
 
 ### 环境要求
 
-- JDK 21 或更高版本
-- Maven 3.6 或更高版本
+- JDK 21+
+- Maven 3.6+
+- MySQL 8.0+
 
 ### 运行项目
 
-1. 克隆项目
 ```bash
 git clone https://github.com/acczff/springboot-demo.git
 cd springboot-demo
-```
-
-2. 编译项目
-```bash
-mvn clean compile
-```
-
-3. 运行项目
-```bash
 mvn spring-boot:run
 ```
 
-或者直接运行主类：
-```bash
-mvn exec:java -Dexec.mainClass="com.zff.springboot_demo.SpringbootDemoApplication"
-```
+### 主要接口
 
-### 测试接口
+| 模块 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 认证 | POST | /api/auth/login | 登录 |
+| 认证 | GET | /api/auth/me | 当前用户信息 |
+| 认证 | POST | /api/auth/logout | 退出 |
+| 用户 | GET | /api/users | 用户列表（分页+搜索） |
+| 用户 | POST | /api/users | 新增用户 |
+| 用户 | PUT | /api/users/{id} | 编辑用户 |
+| 用户 | GET | /api/users/{id}/roles | 查询用户角色 |
+| 用户 | PUT | /api/users/{id}/roles | 绑定用户角色 |
+| 角色 | GET | /api/roles | 角色列表 |
+| 角色 | POST | /api/roles | 新增角色 |
+| 角色 | GET | /api/roles/{id}/permissions | 查询角色权限 |
+| 角色 | PUT | /api/roles/{id}/permissions | 分配角色权限 |
+| 权限 | GET | /api/permissions | 权限列表 |
+| 权限 | POST | /api/permissions | 新增权限 |
+| 菜单 | GET | /api/menus | 菜单树 |
 
-项目启动后，访问以下接口：
+### 响应格式
 
-- **健康检查**: `GET http://localhost:8080/api/health`
-- **获取所有用户**: `GET http://localhost:8080/api/users`
-- **根据ID获取用户**: `GET http://localhost:8080/api/users/{id}`
-- **用户登录**: `POST http://localhost:8080/api/auth/login`
-
-响应示例：
 ```json
 {
   "code": 200,
-  "message": "查询成功",
-  "data": [
-    {
-      "id": 1,
-      "username": "张三",
-      "email": "zhangsan@example.com",
-      "createTime": 1672531200000
-    }
-  ]
+  "message": "success",
+  "data": { }
 }
 ```
 
-## API 文档
+### 测试账号
 
-### 健康检查接口
+| 用户名 | 密码 | 角色 |
+|--------|------|------|
+| admin | 123456 | ADMIN（全部权限） |
 
-- **URL**: `/api/health`
-- **方法**: GET
-- **描述**: 检查应用运行状态
-- **响应**: 
-  - `status`: 应用状态（ok/error）
-  - `timestamp`: 当前时间戳
-
-### 用户管理接口
-
-#### 获取所有用户
-- **URL**: `/api/users`
-- **方法**: GET
-- **描述**: 获取系统中所有用户信息
-- **响应**: 用户列表
-
-#### 根据ID获取用户
-- **URL**: `/api/users/{id}`
-- **方法**: GET
-- **参数**: 
-  - `id`: 用户ID（路径参数）
-- **描述**: 根据用户ID获取特定用户信息
 - **响应**: 用户对象或404错误
 
 ### 认证接口
