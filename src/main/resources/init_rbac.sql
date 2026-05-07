@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     permission_id BIGINT NOT NULL,
     PRIMARY KEY (role_id, permission_id)
 );
+
+CREATE TABLE menus (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    path VARCHAR(100),
+    parent_id BIGINT,
+    sort INT
+);
