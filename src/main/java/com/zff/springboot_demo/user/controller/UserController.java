@@ -1,9 +1,13 @@
 package com.zff.springboot_demo.user.controller;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.operationlog.entity.OperationLog;
+import com.zff.springboot_demo.operationlog.service.OperationLogService;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.user.entity.User;
+import com.zff.springboot_demo.user.repository.UserRepository;
 import com.zff.springboot_demo.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,9 +26,17 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private OperationLogService operationLogService;
     /**
-     * 获取所有用户
-     * @return 用户列表
+     * 分页查询用户
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param keyword 搜索关键字
+     * @return 用户分页数据
      */
     @GetMapping
     public Result<Page<User>> findAll(
@@ -52,7 +64,11 @@ public class UserController {
         }
     }
 
-    // 查询用户角色
+    /**
+     * 查询用户角色
+     * @param id 用户 ID
+     * @return 角色列表
+     */
     @GetMapping("/{id}/roles")
     public Result<List<Role>> getUserRoles(@PathVariable Long id) {
         List<Role> roles = userService.getUserRoles(id);
@@ -60,10 +76,30 @@ public class UserController {
         return Result.success("查询成功", roles);
     }
 
-    // 绑定用户角色
+    /**
+     * 绑定用户角色
+     * @param id 用户 ID
+     * @param roleIds 角色 ID 列表
+     * @return 更新后的用户
+     */
     @PutMapping("/{id}/roles")
-    public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
+    public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds, HttpServletRequest request) {
         User user = userService.assignRoles(id, roleIds);
+        Long userId = (Long) request.getAttribute("currentUserId");
+        String operator = userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElse("未知用户");
+
+        OperationLog log = new OperationLog();
+        log.setOperator(operator);
+        log.setAction("绑定角色");
+        log.setTarget("role");
+        log.setTargetId(user.getId().toString());
+        log.setResult("success");
+        log.setCreateTime(System.currentTimeMillis());
+
+        // 第五步：存日志
+        operationLogService.save(log);
         if (user == null) return Result.error(404, "用户不存在");
         return Result.success("角色绑定成功", user);
     }

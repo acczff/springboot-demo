@@ -29,6 +29,8 @@ public class LoginResponse {
 
     //动态路由
     private List<String> roles;
+    //按钮级权限
+    private List<String> permissions;
     //默认构造
     public LoginResponse() {}
 
@@ -51,6 +53,8 @@ public class LoginResponse {
     public void setEmail(String email) {this.email = email;}
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
+    public List<String> getPermissions() { return permissions; }
+    public void setPermissions(List<String> permissions) { this.permissions = permissions; }
 
 }
 

@@ -19,13 +19,14 @@ public class Role {
     @Column(name = "description", length = 200)
     private String description;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private List<Permission> permissions = new ArrayList<>();
+
     public Role(){}
 
     public Role(Long id, String name, String description) {

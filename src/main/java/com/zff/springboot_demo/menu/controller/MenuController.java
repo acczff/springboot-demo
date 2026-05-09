@@ -2,9 +2,9 @@ package com.zff.springboot_demo.menu.controller;
 
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.menu.entity.Menu;
-import com.zff.springboot_demo.menu.repository.MenuRepository;
 import com.zff.springboot_demo.menu.service.MenuService;
 import com.zff.springboot_demo.role.entity.Role;
+import com.zff.springboot_demo.util.TokenUtil;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.user.entity.User;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
+/**
+ * 菜单管理接口
+ */
 @RestController
 @RequestMapping("/api/menus")
 public class MenuController {
@@ -28,15 +29,19 @@ public class MenuController {
         this.userService = userService;
     }
 
+    /**
+     * 获取当前用户可见的菜单树
+     * @param token 登录令牌
+     * @return 菜单树
+     */
     @GetMapping
     public Result<List<Menu>> getMenuTree(@RequestHeader(value = "Authorization", required = false) String token) {
 
         List<String> userRoles = Collections.emptyList();
 
-        if (token != null && token.startsWith("Bearer token-")) {
+        if (TokenUtil.isValidBearerHeader(token)) {
             try {
-                String[] parts = token.replace("Bearer ", "").split("-");
-                Long userId = Long.parseLong(parts[1]);
+            Long userId = TokenUtil.extractUserId(token);
                 User user = userService.findById(userId);
                 if (user != null) {
                     userRoles = user.getRoles().stream()

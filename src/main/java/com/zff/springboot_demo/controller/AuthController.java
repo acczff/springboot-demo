@@ -3,10 +3,12 @@ package com.zff.springboot_demo.controller;
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.dto.login.LoginRequest;
 import com.zff.springboot_demo.dto.login.LoginResponse;
+import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.util.PasswordEncoder;
+import com.zff.springboot_demo.util.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,10 +48,20 @@ public class AuthController {
 
         // 验证成功返回数据
         LoginResponse response = new LoginResponse();
-        response.setToken("token-" + user.getId() + "-" + System.currentTimeMillis());
+        response.setToken(TokenUtil.generateToken(user.getId()));
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(java.util.stream.Collectors.toList());
+        response.setRoles(roleNames);
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(Permission::getCode)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        response.setPermissions(permissions);
         return Result.success("登录成功",response);
     }
 
@@ -60,20 +72,12 @@ public class AuthController {
      */
     @GetMapping("/me")
     public Result<LoginResponse> me(@RequestHeader("Authorization") String token){
-        if(token == null || !token.startsWith("Bearer token-")){
+        if(!TokenUtil.isValidBearerHeader(token)){
             return Result.error(404,"未登录或 token 失效");
         }
         try {
-            // 2. 尝试无情拆解 Token
-            String tokenValue = token.replace("Bearer ", "");
-            String[] parts = tokenValue.split("-");
-
-            if (parts.length < 2) {
-                return Result.error(404, "Token 被篡改");
-            }
-
             // 提取用户 ID
-            Long userId = Long.parseLong(parts[1]);
+            Long userId = TokenUtil.extractUserId(token);
             User user = userService.findById(userId);
 
             // 3. 查无此人，说明原来登录过但号被库里删了，必须返回 401 让他回登录页，而不是 404
@@ -90,6 +94,12 @@ public class AuthController {
                     .map(Role::getName)
                     .collect(java.util.stream.Collectors.toList());
             response.setRoles(roleNames);
+            List<String> permissions = user.getRoles().stream()
+                    .flatMap(role -> role.getPermissions().stream())
+                    .map(Permission::getCode)
+                    .distinct()
+                    .collect(java.util.stream.Collectors.toList());
+            response.setPermissions(permissions);
             return Result.success("获取成功", response);
 
         } catch (Exception e) {
@@ -105,7 +115,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public Result<Void> logout(@RequestHeader("Authorization") String token){
-        if(token == null || !token.startsWith("Bearer token-")){
+        if(!TokenUtil.isValidBearerHeader(token)){
             return Result.error(401,"未登陆或 token 无效");
         }
         return Result.success("退出成功");

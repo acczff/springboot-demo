@@ -2,8 +2,6 @@ package com.zff.springboot_demo.permission.service;
 
 import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.permission.repository.PermissionRepository;
-import com.zff.springboot_demo.role.repository.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,8 +9,12 @@ import java.util.List;
 @Service
 public class PermissionService {
 
-    @Autowired
-    private PermissionRepository permissionRepository;
+
+    private final PermissionRepository permissionRepository;
+
+    public PermissionService(PermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
+    }
 
     public List<Permission> findAll() {
         return permissionRepository.findAll();

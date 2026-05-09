@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 权限管理接口
+ */
 @RestController
 @RequestMapping("/api/permissions")
 public class PermissionController {
@@ -15,12 +18,21 @@ public class PermissionController {
     @Autowired
     private PermissionService permissionService;
 
+    /**
+     * 查询所有权限
+     * @return 权限列表
+     */
     @GetMapping
     public Result<List<Permission>> findAll() {
         List<Permission> permissions = permissionService.findAll();
         return Result.success("permissions findAll success", permissions);
     }
 
+    /**
+     * 创建权限
+     * @param permission 权限信息
+     * @return 创建后的权限
+     */
     @PostMapping
     public Result<Permission> createPermission(@RequestBody Permission permission) {
         try {

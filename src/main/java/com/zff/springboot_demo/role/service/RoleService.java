@@ -4,7 +4,6 @@ import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.permission.repository.PermissionRepository;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.role.repository.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,11 +11,14 @@ import java.util.List;
 @Service
 public class RoleService {
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
-    @Autowired
-    private PermissionRepository permissionRepository;
+    private final PermissionRepository permissionRepository;
+
+    public RoleService(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+    }
 
     // 查所有角色
     public List<Role> findAll() {
