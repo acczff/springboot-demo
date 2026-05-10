@@ -3,6 +3,8 @@ package com.zff.springboot_demo.user.entity;
 import com.zff.springboot_demo.role.entity.Role;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +26,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;                    // 用户ID
 
+    @NotBlank(message = "用户名不能为空")
     @Column(name = "username", nullable = false, length = 50)
     private String username;            // 用户名字
 
+    @NotBlank(message = "密码不能为空")
     @JsonIgnore
     @Column(name = "password", nullable = false, length = 100)
     private String password;            // 用户密码
 
+    @NotBlank(message = "邮箱不能为空")
+    @Email(message = "邮箱格式不正确")
     @Column(name = "email", nullable = false,length = 100)
     private String email;               // 用户邮箱
 
@@ -44,17 +50,6 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<Role> roles = new ArrayList<>();
-
-    public User() {
-    }
-
-    public User(Long id, String username, String email, Long createTime) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.createTime = createTime;
-
-    }
 
     public Long getId() {
         return id;

@@ -22,7 +22,7 @@ public class PermissionService {
 
     public Permission createPermission(Permission permission) {
         if (permissionRepository.findByCode(permission.getCode()) != null) {
-            throw new RuntimeException("权限码 " + permission.getCode() + " 已存在");
+            throw new IllegalArgumentException("权限码 " + permission.getCode() + " 已存在");
         }
         return permissionRepository.save(permission);
     }

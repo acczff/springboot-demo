@@ -30,7 +30,7 @@ public class UserService {
      * @param id 用户 ID
      * @return 用户对象
      */
-    public User findById(Long id) {
+    public User findById(Long id)    {
         return userRepository.findById(id).orElse(null);
     }
 

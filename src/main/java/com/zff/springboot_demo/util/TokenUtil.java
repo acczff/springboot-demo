@@ -1,5 +1,7 @@
 package com.zff.springboot_demo.util;
 
+import java.util.Optional;
+
 /**
  * Token 工具类
  * 统一管理 token 的生成、Bearer 校验和用户 ID 提取逻辑。
@@ -45,6 +47,27 @@ public final class TokenUtil {
             return Long.parseLong(parts[1]);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("invalid user id in token", e);
+        }
+    }
+
+    /**
+     * 安全提取 userId，token 不合法时返回空。
+     */
+    public static Optional<Long> tryExtractUserId(String authorizationHeader) {
+        if (!isValidBearerHeader(authorizationHeader)) {
+            return Optional.empty();
+        }
+
+        String tokenValue = authorizationHeader.substring(BEARER_PREFIX.length());
+        String[] parts = tokenValue.split("-");
+        if (parts.length < 3) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(Long.parseLong(parts[1]));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
         }
     }
 }

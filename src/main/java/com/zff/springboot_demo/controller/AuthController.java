@@ -9,10 +9,10 @@ import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.util.PasswordEncoder;
 import com.zff.springboot_demo.util.TokenUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 认证控制器
@@ -22,8 +22,11 @@ import java.util.List;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * 登录接口 V2（数据库校验版本）
@@ -72,40 +75,31 @@ public class AuthController {
      */
     @GetMapping("/me")
     public Result<LoginResponse> me(@RequestHeader("Authorization") String token){
-        if(!TokenUtil.isValidBearerHeader(token)){
+        Optional<Long> userId = TokenUtil.tryExtractUserId(token);
+        if(userId.isEmpty()){
             return Result.error(404,"未登录或 token 失效");
         }
-        try {
-            // 提取用户 ID
-            Long userId = TokenUtil.extractUserId(token);
-            User user = userService.findById(userId);
 
-            // 3. 查无此人，说明原来登录过但号被库里删了，必须返回 401 让他回登录页，而不是 404
-            if(user == null){
-                return Result.error(404, "账号已失效，请重新登录");
-            }
-
-            // 4. 一切顺利，成功交差
-            LoginResponse response = new LoginResponse();
-            response.setUserId(userId);
-            response.setUsername(user.getUsername());
-            response.setEmail(user.getEmail());
-            List<String> roleNames = user.getRoles().stream()
-                    .map(Role::getName)
-                    .collect(java.util.stream.Collectors.toList());
-            response.setRoles(roleNames);
-            List<String> permissions = user.getRoles().stream()
-                    .flatMap(role -> role.getPermissions().stream())
-                    .map(Permission::getCode)
-                    .distinct()
-                    .collect(java.util.stream.Collectors.toList());
-            response.setPermissions(permissions);
-            return Result.success("获取成功", response);
-
-        } catch (Exception e) {
-            // 5. 终极兜底：比如强转数字报错，绝不崩掉报 500，而是温柔地返回 401
-            return Result.error(404, "Token 解析异常，请重新登录");
+        User user = userService.findById(userId.get());
+        if(user == null){
+            return Result.error(404, "账号已失效，请重新登录");
         }
+
+        LoginResponse response = new LoginResponse();
+        response.setUserId(userId.get());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(java.util.stream.Collectors.toList());
+        response.setRoles(roleNames);
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(Permission::getCode)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        response.setPermissions(permissions);
+        return Result.success("获取成功", response);
     }
 
     /**

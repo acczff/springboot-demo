@@ -25,20 +25,16 @@ public class FileController {
      * @return 文件访问路径
      */
     @PostMapping("/upload")
-    public Result<String> upload(@RequestParam("file") MultipartFile file) {
+    public Result<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
         // 你来实现
         String originalName = file.getOriginalFilename(); // 拿原始文件名
         String suffix = originalName.substring(originalName.lastIndexOf(".")); // 截取后缀
         String newName = UUID.randomUUID().toString() + suffix; // 拼成新文件名
         File dir = new File(System.getProperty("user.dir"), "uploads");
-        if (!dir.exists()) {
-            dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException("创建上传目录失败");
         }
-        try {
-            file.transferTo(new File(dir, newName));
-        } catch (IOException e) {
-            return Result.error(e.getMessage());
-        }
+        file.transferTo(new File(dir, newName));
         return  Result.success("upload success","/uploads/" + newName);
     }
 }

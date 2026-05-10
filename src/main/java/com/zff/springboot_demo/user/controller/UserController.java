@@ -1,6 +1,8 @@
 package com.zff.springboot_demo.user.controller;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.dto.PageResult;
+import com.zff.springboot_demo.operationlog.LogOperation;
 import com.zff.springboot_demo.operationlog.entity.OperationLog;
 import com.zff.springboot_demo.operationlog.service.OperationLogService;
 import com.zff.springboot_demo.role.entity.Role;
@@ -8,7 +10,7 @@ import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.repository.UserRepository;
 import com.zff.springboot_demo.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,14 +25,22 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private OperationLogService operationLogService;
+    private final OperationLogService operationLogService;
+
+    public UserController(
+            UserService userService,
+            UserRepository userRepository,
+            OperationLogService operationLogService
+    ) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.operationLogService = operationLogService;
+    }
+
     /**
      * 分页查询用户
      * @param pageNum 页码
@@ -39,14 +49,15 @@ public class UserController {
      * @return 用户分页数据
      */
     @GetMapping
-    public Result<Page<User>> findAll(
+    public Result<PageResult<User>> findAll(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String keyword
     ) {
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
         Page<User> page = userService.findAll(keyword, pageable);  // ← 传 keyword
-        return Result.success("查询成功", page);
+        PageResult<User> pageResult = new PageResult<>(page.getContent(), page.getTotalElements());
+        return Result.success("查询成功", pageResult);
     }
 
     /**
@@ -82,24 +93,10 @@ public class UserController {
      * @param roleIds 角色 ID 列表
      * @return 更新后的用户
      */
+    @LogOperation("绑定角色")
     @PutMapping("/{id}/roles")
-    public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds, HttpServletRequest request) {
+    public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
         User user = userService.assignRoles(id, roleIds);
-        Long userId = (Long) request.getAttribute("currentUserId");
-        String operator = userRepository.findById(userId)
-                .map(User::getUsername)
-                .orElse("未知用户");
-
-        OperationLog log = new OperationLog();
-        log.setOperator(operator);
-        log.setAction("绑定角色");
-        log.setTarget("role");
-        log.setTargetId(user.getId().toString());
-        log.setResult("success");
-        log.setCreateTime(System.currentTimeMillis());
-
-        // 第五步：存日志
-        operationLogService.save(log);
         if (user == null) return Result.error(404, "用户不存在");
         return Result.success("角色绑定成功", user);
     }
@@ -110,7 +107,7 @@ public class UserController {
      * @return 创建后的用户对象
      */
     @PostMapping
-    public Result<User> createUser(@RequestBody User user) {
+    public Result<User> createUser(@RequestBody @Valid User user) {
         user.setCreateTime(System.currentTimeMillis());
         User createUser = userService.createUser(user);
         return Result.success("用户创建成功", createUser);

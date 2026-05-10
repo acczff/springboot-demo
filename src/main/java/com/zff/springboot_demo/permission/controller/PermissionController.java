@@ -3,7 +3,6 @@ package com.zff.springboot_demo.permission.controller;
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.permission.service.PermissionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,8 +14,11 @@ import java.util.List;
 @RequestMapping("/api/permissions")
 public class PermissionController {
 
-    @Autowired
-    private PermissionService permissionService;
+    private final PermissionService permissionService;
+
+    public PermissionController(PermissionService permissionService) {
+        this.permissionService = permissionService;
+    }
 
     /**
      * 查询所有权限
@@ -35,11 +37,7 @@ public class PermissionController {
      */
     @PostMapping
     public Result<Permission> createPermission(@RequestBody Permission permission) {
-        try {
-            Permission created = permissionService.createPermission(permission);
-            return Result.success("permission create Success", created);
-        } catch (RuntimeException e) {
-            return Result.error(400, e.getMessage());
-        }
+        Permission created = permissionService.createPermission(permission);
+        return Result.success("permission create Success", created);
     }
 }

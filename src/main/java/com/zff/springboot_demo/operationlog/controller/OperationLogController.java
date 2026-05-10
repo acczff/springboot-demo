@@ -1,6 +1,7 @@
 package com.zff.springboot_demo.operationlog.controller;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.dto.PageResult;
 import com.zff.springboot_demo.operationlog.entity.OperationLog;
 import com.zff.springboot_demo.operationlog.repository.OperationLogRepository;
 import org.springframework.data.domain.Page;
@@ -22,13 +23,14 @@ public class OperationLogController {
     }
 
     @GetMapping
-    public Result<Page<OperationLog>> findAll(
+    public Result<PageResult<OperationLog>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         PageRequest pageable = PageRequest.of(page, size,
                 Sort.by(Sort.Direction.DESC, "createTime")); // 最新的排前面
         Page<OperationLog> logs = operationLogRepository.findAll(pageable);
-        return Result.success("查詢成功",logs);
+        PageResult<OperationLog> pageResult = new PageResult<>(logs.getContent(), logs.getTotalElements());
+        return Result.success("查詢成功",pageResult);
     }
 }

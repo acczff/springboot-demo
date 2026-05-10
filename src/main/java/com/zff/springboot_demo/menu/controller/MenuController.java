@@ -10,6 +10,7 @@ import com.zff.springboot_demo.user.entity.User;
 import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,16 +40,14 @@ public class MenuController {
 
         List<String> userRoles = Collections.emptyList();
 
-        if (TokenUtil.isValidBearerHeader(token)) {
-            try {
-            Long userId = TokenUtil.extractUserId(token);
-                User user = userService.findById(userId);
-                if (user != null) {
-                    userRoles = user.getRoles().stream()
-                            .map(Role::getName)
-                            .collect(java.util.stream.Collectors.toList());
-                }
-            } catch (Exception ignored) {}
+        Optional<Long> userId = TokenUtil.tryExtractUserId(token);
+        if (userId.isPresent()) {
+            User user = userService.findById(userId.get());
+            if (user != null) {
+                userRoles = user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(java.util.stream.Collectors.toList());
+            }
         }
 
         List<Menu> menus = menuService.getMenuTree(userRoles);
