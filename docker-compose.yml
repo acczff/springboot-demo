@@ -1,0 +1,25 @@
+services:
+
+  db:                          # 服务名，后端连接时用这个名字当主机名
+    image: mysql:8.0           # 用 MySQL 8.0 官方镜像
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456        # root 密码（和你本地一致）
+      MYSQL_DATABASE: springboot_demo    # 自动创建这个库
+    ports:
+      - "3307:3306"            # 宿主机3307→容器3306（避免和本地MySQL冲突）
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:                         # 后端服务
+    build: .                   # 用当前目录的 Dockerfile 构建
+    ports:
+      - "8080:8080"            # 端口映射
+    depends_on:
+      - db                     # 告诉 compose：先启动 db，再启动 app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
