@@ -3,6 +3,7 @@ package com.zff.springboot_demo.user.entity;
 import com.zff.springboot_demo.role.entity.Role;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -31,7 +32,7 @@ public class User {
     private String username;            // 用户名字
 
     @NotBlank(message = "密码不能为空")
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password", nullable = false, length = 100)
     private String password;            // 用户密码
 
