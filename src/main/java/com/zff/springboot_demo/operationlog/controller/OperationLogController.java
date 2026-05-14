@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 操作日志查询接口。
+ */
 @RestController
 @RequestMapping("/api/logs")
 public class OperationLogController {
@@ -22,6 +25,9 @@ public class OperationLogController {
         this.operationLogRepository = operationLogRepository;
     }
 
+    /**
+     * 分页查询操作日志，默认按创建时间倒序返回。
+     */
     @GetMapping
     public Result<PageResult<OperationLog>> findAll(
             @RequestParam(defaultValue = "0") int page,

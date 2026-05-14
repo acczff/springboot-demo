@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 菜单实体，对应前端路由菜单配置。
+ */
 @Entity
 @Table(name = "menus")
 public class Menu {
@@ -14,20 +17,23 @@ public class Menu {
     private Long id;
 
     @Column(name = "name", nullable = false, length = 50)
-    private String name;
+    private String name;           // 菜单显示名称，如 "用户管理"
 
     @Column(name = "path", length = 100)
-    private String path;
+    private String path;           // 前端路由路径，如 "/users"
 
     @Column(name = "parent_id")
-    private Long parentId;
+    private Long parentId;         // 父菜单ID，为 null 表示一级菜单
 
     @Column(name = "sort")
-    private Integer sort;
+    private Integer sort;          // 排序权重，数字越小越靠前
 
     @Column(name = "required_role", length = 50)
-    private String requiredRole;
+    private String requiredRole;   // 可见所需角色名，如 "ADMIN"；为 null 表示所有人可见
 
+    /**
+     * 子菜单列表，仅用于接口返回，不持久化到数据库。
+     */
     @Transient
     private List<Menu> children = new ArrayList<>();
 

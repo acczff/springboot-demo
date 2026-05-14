@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 菜单业务逻辑层，负责按角色过滤并组装菜单树。
+ */
 @Service
 public class MenuService {
 
@@ -15,6 +18,9 @@ public class MenuService {
         this.menuRepository = menuRepository;
     }
 
+    /**
+     * 获取当前用户可见的一级菜单及其子菜单。
+     */
     public List<Menu> getMenuTree(List<String> userRoles) {
         List<Menu> allMenus = menuRepository.findAll();
 

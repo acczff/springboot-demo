@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;
 
+/**
+ * 角色实体，对应系统中的角色及其权限集合。
+ */
 @Entity
 @Table(name = "roles")
 public class Role {
@@ -19,6 +22,9 @@ public class Role {
     @Column(name = "description", length = 200)
     private String description;
 
+    /**
+     * 角色拥有的权限，通过 role_permissions 中间表维护多对多关系。
+     */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",

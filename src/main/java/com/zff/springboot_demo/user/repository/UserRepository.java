@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * 用户数据访问层
- * 暂时使用内存存储（Map），后续会替换为真实数据库
+ * 继承 JpaRepository，提供用户表的基础 CRUD 和派生查询。
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -28,6 +28,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     User findByEmail(String email);
 
+    /**
+     * 根据用户名或邮箱模糊分页查询用户。
+     */
     Page<User> findByUsernameContainingOrEmailContaining(String username, String email, Pageable pageable);
 
 //    // 继承 JpaRepository 后自动获得的方法

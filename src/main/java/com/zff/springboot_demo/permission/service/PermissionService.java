@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 权限业务逻辑层，负责权限查询和创建校验。
+ */
 @Service
 public class PermissionService {
 
@@ -16,10 +19,16 @@ public class PermissionService {
         this.permissionRepository = permissionRepository;
     }
 
+    /**
+     * 查询全部权限。
+     */
     public List<Permission> findAll() {
         return permissionRepository.findAll();
     }
 
+    /**
+     * 创建权限，并校验权限码不能重复。
+     */
     public Permission createPermission(Permission permission) {
         if (permissionRepository.findByCode(permission.getCode()) != null) {
             throw new IllegalArgumentException("权限码 " + permission.getCode() + " 已存在");

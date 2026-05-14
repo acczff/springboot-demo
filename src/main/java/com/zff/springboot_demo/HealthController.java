@@ -20,6 +20,9 @@ public class HealthController {
         return Result.success("健康检查成功",data);
     }
 
+    /**
+     * 健康检查响应数据。
+     */
     static class HealthData {
         private String status;
         private Long timestamp;

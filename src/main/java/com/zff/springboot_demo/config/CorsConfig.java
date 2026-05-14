@@ -6,9 +6,15 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/**
+ * 跨域配置，允许前端开发服务访问后端接口。
+ */
 @Configuration
 public class CorsConfig {
 
+    /**
+     * 注册全局 CORS 过滤器。
+     */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();

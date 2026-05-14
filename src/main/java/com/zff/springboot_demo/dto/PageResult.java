@@ -2,6 +2,10 @@ package com.zff.springboot_demo.dto;
 
 import java.util.List;
 
+/**
+ * 分页响应 DTO，统一封装列表数据和总条数。
+ * @param <T> 列表元素类型
+ */
 public class PageResult<T> {
 
     private List<T> list;

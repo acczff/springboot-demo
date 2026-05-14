@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 角色业务逻辑层，负责角色维护和权限绑定。
+ */
 @Service
 public class RoleService {
 
@@ -20,12 +23,16 @@ public class RoleService {
         this.permissionRepository = permissionRepository;
     }
 
-    // 查所有角色
+    /**
+     * 查询全部角色。
+     */
     public List<Role> findAll() {
         return roleRepository.findAll();
     }
 
-    // 新增角色
+    /**
+     * 创建角色，并校验角色名不能重复。
+     */
     public Role createRole(Role role) {
         if (roleRepository.findByName(role.getName()) != null) {
             throw new RuntimeException("角色名 " + role.getName() + " 已存在");
@@ -33,14 +40,18 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    // 查询角色的权限列表
+    /**
+     * 查询指定角色拥有的权限列表。
+     */
     public List<Permission> getRolePermissions(Long roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("角色不存在"));
         return role.getPermissions();
     }
 
-    // 分配权限给角色
+    /**
+     * 为角色重新分配权限，传入的权限 ID 会覆盖原有绑定。
+     */
     public Role assignPermissions(Long roleId, List<Long> permissionIds) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("角色不存在"));

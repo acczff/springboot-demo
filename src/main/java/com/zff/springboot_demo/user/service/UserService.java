@@ -4,6 +4,7 @@ import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.role.repository.RoleRepository;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.repository.UserRepository;
+import com.zff.springboot_demo.util.PasswordEncoder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,9 @@ public class UserService {
     }
 
 
+    /**
+     * 按关键字分页查询用户；关键字为空时查询全部。
+     */
     public Page<User> findAll(String keyword, Pageable pageable) {
         if (keyword == null || keyword.isBlank()) {
             return userRepository.findAll(pageable);  // 没有关键词，查全部
@@ -66,6 +70,7 @@ public class UserService {
      * @return 创建后的用户对象
      */
     public User createUser(User user) {
+        user.setPassword(PasswordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -81,7 +86,7 @@ public class UserService {
                     existingUser.setUsername(user.getUsername());
                     existingUser.setEmail(user.getEmail());
                     if (user.getPassword() != null && !user.getPassword().isBlank()) {
-                        existingUser.setPassword(user.getPassword());
+                        existingUser.setPassword(PasswordEncoder.encode(user.getPassword()));
                     }
                     return userRepository.save(existingUser);
                 })
@@ -102,14 +107,18 @@ public class UserService {
         return true;
     }
 
-    // 查询用户的角色列表
+    /**
+     * 查询用户已绑定的角色列表。
+     */
     public List<Role> getUserRoles(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return null;
         return user.getRoles();
     }
 
-    // 给用户绑定角色（传入角色 ID 列表，覆盖原有绑定）
+    /**
+     * 给用户绑定角色，传入的角色 ID 列表会覆盖原有绑定。
+     */
     public User assignRoles(Long userId, List<Long> roleIds) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return null;

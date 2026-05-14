@@ -27,9 +27,13 @@ public class LoginResponse {
      */
     private String email;
 
-    //动态路由
+    /**
+     * 用户角色列表，用于前端动态路由控制。
+     */
     private List<String> roles;
-    //按钮级权限
+    /**
+     * 权限码列表，用于前端按钮级权限控制。
+     */
     private List<String> permissions;
     //默认构造
     public LoginResponse() {}
@@ -57,4 +61,3 @@ public class LoginResponse {
     public void setPermissions(List<String> permissions) { this.permissions = permissions; }
 
 }
-

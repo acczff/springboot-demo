@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+/**
+ * 操作日志切面，拦截带 @LogOperation 的方法并写入日志。
+ */
 @Aspect
 @Component
 public class OperationLogAspect {
@@ -24,7 +27,9 @@ public class OperationLogAspect {
         this.userRepository = userRepository;
     }
 
-    // 拦截所有带 @LogOperation 注解的方法，方法正常返回后执行
+    /**
+     * 拦截所有带 @LogOperation 注解的方法，方法正常返回后记录操作人和动作。
+     */
     @AfterReturning("@annotation(logOperation)")
     public void recordLog(JoinPoint joinPoint, LogOperation logOperation) {
         // 1. 从当前请求里取 userId

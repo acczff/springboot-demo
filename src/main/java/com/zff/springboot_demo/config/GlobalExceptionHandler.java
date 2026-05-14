@@ -8,9 +8,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.io.IOException;
 
+/**
+ * 全局异常处理器，将常见异常转换成统一响应格式。
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * 处理参数校验失败异常。
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result<String> handleValidationException(MethodArgumentNotValidException ex) {
         // 拿到第一条校验失败的错误信息
@@ -23,21 +29,33 @@ public class GlobalExceptionHandler {
         return Result.error(400, message);
     }
 
+    /**
+     * 处理业务参数不合法异常。
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public Result<String> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return Result.error(400, ex.getMessage());
+        return Result.error(400, ex.getMessage() + "：处理业务参数不合法异常。");
     }
 
+    /**
+     * 处理文件读写异常。
+     */
     @ExceptionHandler(IOException.class)
     public Result<String> handleIOException(IOException ex) {
-        return Result.error(500, ex.getMessage());
+        return Result.error(500, ex.getMessage() + "：处理文件读写异常。");
     }
 
+    /**
+     * 处理未单独声明的运行时异常。
+     */
     @ExceptionHandler(RuntimeException.class)
     public Result<String> handleRuntimeException(RuntimeException ex) {
-        return Result.error(ex.getMessage());
+        return Result.error(ex.getMessage() + "： 处理未单独声明的运行时异常。");
     }
 
+    /**
+     * 处理请求体为空或 JSON 格式错误。
+     */
     @ExceptionHandler
     public Result<String> handleMessageNotReadable(HttpMessageNotReadableException ex) {
         return Result.error(400, "请求体不能为空或格式错误");
