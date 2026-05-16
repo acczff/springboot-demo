@@ -5,6 +5,7 @@ import com.zff.springboot_demo.permission.repository.PermissionRepository;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.role.repository.RoleRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class RoleService {
     /**
      * 为角色重新分配权限，传入的权限 ID 会覆盖原有绑定。
      */
+    @Transactional
     public Role assignPermissions(Long roleId, List<Long> permissionIds) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("角色不存在"));

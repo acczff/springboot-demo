@@ -1,10 +1,14 @@
 package com.zff.springboot_demo.workorder.service;
 
+import com.zff.springboot_demo.workorder.dto.WorkOrderCreateRequest;
+import com.zff.springboot_demo.workorder.entity.Product;
 import com.zff.springboot_demo.workorder.entity.WorkOrder;
+import com.zff.springboot_demo.workorder.entity.WorkOrderItem;
 import com.zff.springboot_demo.workorder.repository.WorkOrderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 工单业务逻辑层，负责工单查询、保存和下发。
@@ -13,9 +17,13 @@ import org.springframework.stereotype.Service;
 public class WorkOrderService {
 
     private final WorkOrderRepository workOrderRepository;
+    private final ProductService productService;
+    private final WorkOrderItemService workOrderItemService;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository) {
+    public WorkOrderService(WorkOrderRepository workOrderRepository, ProductService productService, WorkOrderItemService workOrderItemService) {
         this.workOrderRepository = workOrderRepository;
+        this.productService = productService;
+        this.workOrderItemService = workOrderItemService;
     }
 
     /**
@@ -57,5 +65,23 @@ public class WorkOrderService {
         }
         workOrder.setStatus("ISSUED");
         return workOrderRepository.save(workOrder);
+    }
+
+    @Transactional
+    public WorkOrder createWithItems(WorkOrderCreateRequest request) {
+        WorkOrder workOrder = new WorkOrder();
+        workOrder.setCreatedTime(System.currentTimeMillis());
+        workOrder.setStatus("DRAFT");
+        workOrder.setCreatedBy(request.getCreatedBy());
+        this.create(workOrder);
+        request.getWorkOrderItemRequests().forEach(item -> {
+            Product product =  productService.findById(item.getProductId());
+            WorkOrderItem workOrderItem = new WorkOrderItem();
+            workOrderItem.setWorkOrder(workOrder);
+            workOrderItem.setProduct(product);
+            workOrderItem.setPlannedQty(item.getPlannedQty());
+            workOrderItemService.save(workOrderItem);
+        });
+        return workOrder;
     }
 }

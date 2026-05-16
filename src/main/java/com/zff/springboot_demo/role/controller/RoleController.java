@@ -2,14 +2,9 @@ package com.zff.springboot_demo.role.controller;
 
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.operationlog.LogOperation;
-import com.zff.springboot_demo.operationlog.entity.OperationLog;
-import com.zff.springboot_demo.operationlog.service.OperationLogService;
 import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.role.service.RoleService;
-import com.zff.springboot_demo.user.entity.User;
-import com.zff.springboot_demo.user.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 

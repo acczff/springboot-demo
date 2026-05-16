@@ -8,6 +8,7 @@ import com.zff.springboot_demo.util.PasswordEncoder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -119,9 +120,10 @@ public class UserService {
     /**
      * 给用户绑定角色，传入的角色 ID 列表会覆盖原有绑定。
      */
+    @Transactional
     public User assignRoles(Long userId, List<Long> roleIds) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return null;
+        User user = userRepository.findById(userId).
+                orElseThrow(() -> new RuntimeException("角色不存在"));
         List<Role> roles = roleRepository.findAllById(roleIds);
         user.setRoles(roles);
         return userRepository.save(user);

@@ -27,18 +27,8 @@ public class UserController {
 
     private final UserService userService;
 
-    private final UserRepository userRepository;
-
-    private final OperationLogService operationLogService;
-
-    public UserController(
-            UserService userService,
-            UserRepository userRepository,
-            OperationLogService operationLogService
-    ) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userRepository = userRepository;
-        this.operationLogService = operationLogService;
     }
 
     /**

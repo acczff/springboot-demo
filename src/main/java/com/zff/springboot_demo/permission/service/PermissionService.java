@@ -3,6 +3,7 @@ package com.zff.springboot_demo.permission.service;
 import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.permission.repository.PermissionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class PermissionService {
     /**
      * 创建权限，并校验权限码不能重复。
      */
+    @Transactional
     public Permission createPermission(Permission permission) {
         if (permissionRepository.findByCode(permission.getCode()) != null) {
             throw new IllegalArgumentException("权限码 " + permission.getCode() + " 已存在");
