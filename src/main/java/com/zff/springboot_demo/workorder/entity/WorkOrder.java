@@ -30,6 +30,12 @@ public class WorkOrder {
     @Column(name = "created_time", nullable = false)
     private Long createdTime;           // 创建时间戳（毫秒，System.currentTimeMillis()）
 
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;                // 工单名称
+
+    @Column(name = "created_by_name", length = 50)
+    private String createdByName;       // 创建人用户名（创建时快照）
+
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("items")
     private List<WorkOrderItem> items = new ArrayList<>();
@@ -64,6 +70,22 @@ public class WorkOrder {
 
     public void setCreatedTime(Long createdTime) {
         this.createdTime = createdTime;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCreatedByName() {
+        return createdByName;
+    }
+
+    public void setCreatedByName(String createdByName) {
+        this.createdByName = createdByName;
     }
 
     public List<WorkOrderItem> getItems() {

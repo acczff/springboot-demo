@@ -1,5 +1,7 @@
 package com.zff.springboot_demo.workorder.service;
 
+import com.zff.springboot_demo.user.entity.User;
+import com.zff.springboot_demo.user.repository.UserRepository;
 import com.zff.springboot_demo.workorder.dto.WorkOrderCreateRequest;
 import com.zff.springboot_demo.workorder.entity.Product;
 import com.zff.springboot_demo.workorder.entity.WorkOrder;
@@ -19,11 +21,13 @@ public class WorkOrderService {
     private final WorkOrderRepository workOrderRepository;
     private final ProductService productService;
     private final WorkOrderItemService workOrderItemService;
+    private final UserRepository userRepository;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository, ProductService productService, WorkOrderItemService workOrderItemService) {
+    public WorkOrderService(WorkOrderRepository workOrderRepository, ProductService productService, WorkOrderItemService workOrderItemService, UserRepository userRepository) {
         this.workOrderRepository = workOrderRepository;
         this.productService = productService;
         this.workOrderItemService = workOrderItemService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -69,10 +73,14 @@ public class WorkOrderService {
 
     @Transactional
     public WorkOrder createWithItems(WorkOrderCreateRequest request) {
+        User creator = userRepository.findById(request.getCreatedBy())
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + request.getCreatedBy()));
         WorkOrder workOrder = new WorkOrder();
+        workOrder.setName(request.getName());
         workOrder.setCreatedTime(System.currentTimeMillis());
         workOrder.setStatus("DRAFT");
         workOrder.setCreatedBy(request.getCreatedBy());
+        workOrder.setCreatedByName(creator.getUsername());
         this.create(workOrder);
         request.getWorkOrderItemRequests().forEach(item -> {
             Product product =  productService.findById(item.getProductId());
