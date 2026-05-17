@@ -33,7 +33,8 @@ public class UserService {
      * @return 用户对象
      */
     public User findById(Long id)    {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("产品不存在"));
     }
 
     /**
