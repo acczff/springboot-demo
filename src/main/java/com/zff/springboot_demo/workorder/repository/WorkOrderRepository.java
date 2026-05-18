@@ -15,4 +15,10 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     //通过状态筛选
     Page<WorkOrder> findByStatus(String status, Pageable pageable);
+
+    // 有状态筛选时
+    Page<WorkOrder> findByStatusAndDeletedFalse(String status, Pageable pageable);
+
+    // 无状态筛选时（替换 findAll）
+    Page<WorkOrder> findByDeletedFalse(Pageable pageable);
 }

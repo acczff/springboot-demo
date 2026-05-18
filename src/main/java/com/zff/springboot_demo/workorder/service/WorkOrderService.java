@@ -1,12 +1,13 @@
 package com.zff.springboot_demo.workorder.service;
 
 import com.zff.springboot_demo.user.entity.User;
-import com.zff.springboot_demo.user.repository.UserRepository;
+import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.workorder.dto.WorkOrderCreateRequest;
 import com.zff.springboot_demo.workorder.entity.Product;
 import com.zff.springboot_demo.workorder.entity.WorkOrder;
 import com.zff.springboot_demo.workorder.entity.WorkOrderItem;
 import com.zff.springboot_demo.workorder.repository.WorkOrderRepository;
+import com.zff.springboot_demo.workreport.service.WorkReportService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,19 @@ public class WorkOrderService {
     private final WorkOrderRepository workOrderRepository;
     private final ProductService productService;
     private final WorkOrderItemService workOrderItemService;
-    private final UserRepository userRepository;
+    private final UserService userService;
+    private final WorkReportService workReportService;
 
-    public WorkOrderService(WorkOrderRepository workOrderRepository, ProductService productService, WorkOrderItemService workOrderItemService, UserRepository userRepository) {
+    public WorkOrderService(WorkOrderRepository workOrderRepository,
+                            ProductService productService,
+                            WorkOrderItemService workOrderItemService,
+                            UserService userService,
+                            WorkReportService workReportService) {
         this.workOrderRepository = workOrderRepository;
         this.productService = productService;
         this.workOrderItemService = workOrderItemService;
-        this.userRepository = userRepository;
+        this.userService = userService;
+        this.workReportService = workReportService;
     }
 
     /**
@@ -35,9 +42,9 @@ public class WorkOrderService {
      */
     public Page<WorkOrder> findByStatus(String status, Pageable pageable) {
         if(status == null || status.isBlank()){
-            return workOrderRepository.findAll(pageable);
+            return workOrderRepository.findByDeletedFalse(pageable);
         }
-        return workOrderRepository.findByStatus(status, pageable);
+        return workOrderRepository.findByStatusAndDeletedFalse(status, pageable);
     }
 
     public WorkOrder findById(Long id) {
@@ -73,8 +80,7 @@ public class WorkOrderService {
 
     @Transactional
     public WorkOrder createWithItems(WorkOrderCreateRequest request) {
-        User creator = userRepository.findById(request.getCreatedBy())
-                .orElseThrow(() -> new RuntimeException("用户不存在：" + request.getCreatedBy()));
+        User creator = userService.findById(request.getCreatedBy());
         WorkOrder workOrder = new WorkOrder();
         workOrder.setName(request.getName());
         workOrder.setCreatedTime(System.currentTimeMillis());
@@ -91,5 +97,13 @@ public class WorkOrderService {
             workOrderItemService.save(workOrderItem);
         });
         return workOrder;
+    }
+
+    @Transactional
+    public void softDelete(Long id) {
+        WorkOrder workOrder = this.findById(id);
+        workOrder.setDeleted(true);
+        workOrderRepository.save(workOrder);
+        workReportService.softDeleteByWorkOrderId(id);
     }
 }

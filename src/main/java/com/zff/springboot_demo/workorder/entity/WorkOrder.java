@@ -36,6 +36,10 @@ public class WorkOrder {
     @Column(name = "created_by_name", length = 50)
     private String createdByName;       // 创建人用户名（创建时快照）
 
+    /** 是否已软删除（删除时置为 true，不再出现在查询列表中） */
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("items")
     private List<WorkOrderItem> items = new ArrayList<>();
@@ -86,6 +90,14 @@ public class WorkOrder {
 
     public void setCreatedByName(String createdByName) {
         this.createdByName = createdByName;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 
     public List<WorkOrderItem> getItems() {

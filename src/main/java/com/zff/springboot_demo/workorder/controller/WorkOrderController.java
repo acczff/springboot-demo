@@ -72,7 +72,17 @@ public class WorkOrderController {
      */
     @PutMapping("/{id}/issue")
     public Result<WorkOrder> issue(@PathVariable Long id) {
-    // Service 内部会抛异常，这里完全不需要判断
-    return Result.success("下发成功", workOrderService.issue(id));
-}
+        // Service 内部会抛异常，这里完全不需要判断
+        return Result.success("下发成功", workOrderService.issue(id));
+    }
+
+    /**
+     * 软删除工单（同时级联软删除该工单下所有报工记录）。
+     * @param id 工单主键
+     */
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        workOrderService.softDelete(id);
+        return Result.success("删除成功");
+    }
 }

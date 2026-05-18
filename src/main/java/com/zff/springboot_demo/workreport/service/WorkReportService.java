@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class WorkReportService {
 
@@ -106,5 +108,15 @@ public class WorkReportService {
         workReport.setReviewedTime(System.currentTimeMillis());
         workReport.setRejectReason(rejectReason);
         return workReportRepository.save(workReport);
+    }
+
+    /**
+     * 级联软删除：工单软删除时，将该工单下所有未删除的报工记录一并软删除。
+     */
+    @Transactional
+    public void softDeleteByWorkOrderId(Long workOrderId) {
+        List<WorkReport> workReports = workReportRepository.findByWorkOrderIdAndDeletedFalse(workOrderId);
+        workReports.forEach(report -> report.setDeleted(true));
+        workReportRepository.saveAll(workReports);
     }
 }

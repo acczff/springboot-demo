@@ -41,6 +41,10 @@
     {
       "key": "reportId2",
       "value": ""
+    },
+    {
+      "key": "reportWorkOrderId",
+      "value": ""
     }
   ],
   "item": [
@@ -1055,7 +1059,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"name\":\"接口测试工单\",\"items\":[]}"
+              "raw": "{\"name\":\"接口测试工单\",\"createdBy\":{{adminUserId}},\"workOrderItemRequests\":[{\"productId\":1,\"plannedQty\":10}]}"
             },
             "url": {
               "raw": "{{base}}/api/work-orders",
@@ -1155,12 +1159,176 @@
               }
             }
           ]
+        },
+        {
+          "name": "28 软删除工单(级联删报工)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{workOrderId}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{workOrderId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('删除成功200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('data为空',()=>pm.expect(r.data).to.be.null);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "29 验证软删除(工单不在列表中)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders?pageNum=1&pageSize=100",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders"
+              ],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "var ids=r.data.list.map(function(x){return x.id;});",
+                  "var deletedId=Number(pm.collectionVariables.get('workOrderId'));",
+                  "pm.test('软删除生效-工单不在列表',()=>pm.expect(ids).to.not.include(deletedId));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
     {
       "name": "报工模块",
       "item": [
+        {
+          "name": "报工-S1 创建测试工单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"报工测试专用工单\",\"createdBy\":{{adminUserId}},\"workOrderItemRequests\":[{\"productId\":1,\"plannedQty\":100}]}"
+            },
+            "url": {
+              "raw": "{{base}}/api/work-orders",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('创建成功200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.collectionVariables.set('reportWorkOrderId',r.data.id);",
+                  "console.log('报工测试工单ID:',r.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "报工-S2 下发测试工单",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{reportWorkOrderId}}/issue",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{reportWorkOrderId}}",
+                "issue"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('下发成功200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('状态ISSUED',()=>pm.expect(r.data.status).to.eql('ISSUED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
         {
           "name": "28 创建报工记录DRAFT",
           "request": {
@@ -1177,7 +1345,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"workOrderId\":1,\"reportedQty\":88}"
+              "raw": "{\"workOrderId\":{{reportWorkOrderId}},\"reportedQty\":88}"
             },
             "url": {
               "raw": "{{base}}/api/work-reports",
@@ -1281,7 +1449,8 @@
                   "var r=pm.response.json();",
                   "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
                   "var ids=r.data.list.map(function(x){return x.id;});",
-                  "pm.test('含刚创建的记录',()=>pm.expect(ids).to.include(pm.collectionVariables.get('reportId')));"
+                  "var rid=Number(pm.collectionVariables.get('reportId'));",
+                  "pm.test('含刚创建的记录',()=>pm.expect(ids).to.include(rid));"
                 ],
                 "type": "text/javascript"
               }
@@ -1299,7 +1468,7 @@
               }
             ],
             "url": {
-              "raw": "{{base}}/api/work-reports?workOrderId=1&pageNum=1&pageSize=10",
+              "raw": "{{base}}/api/work-reports?workOrderId={{reportWorkOrderId}}&pageNum=1&pageSize=10",
               "host": [
                 "{{base}}"
               ],
@@ -1310,7 +1479,7 @@
               "query": [
                 {
                   "key": "workOrderId",
-                  "value": "1"
+                  "value": "{{reportWorkOrderId}}"
                 },
                 {
                   "key": "pageNum",
@@ -1477,7 +1646,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"workOrderId\":2,\"reportedQty\":99}"
+              "raw": "{\"workOrderId\":{{reportWorkOrderId}},\"reportedQty\":99}"
             },
             "url": {
               "raw": "{{base}}/api/work-reports",
@@ -1627,7 +1796,8 @@
                   "var r=pm.response.json();",
                   "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
                   "var ids=r.data.list.map(function(x){return x.id;});",
-                  "pm.test('软删除生效',()=>pm.expect(ids).to.not.include(pm.collectionVariables.get('reportId2')));"
+                  "var rid2=Number(pm.collectionVariables.get('reportId2'));",
+                  "pm.test('软删除生效',()=>pm.expect(ids).to.not.include(rid2));"
                 ],
                 "type": "text/javascript"
               }
