@@ -59,6 +59,14 @@ public class WorkReport {
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 
+    /** 关联的工单明细行 ID（按产品报工时填写，汇总报工时为 null） */
+    @Column(name = "work_order_item_id")
+    private Long workOrderItemId;
+
+    /** 产品名称快照（创建时从明细行取，防止后续产品改名影响历史记录） */
+    @Column(name = "product_name", length = 100)
+    private String productName;
+
     public Long getId() {
         return id;
     }
@@ -153,5 +161,21 @@ public class WorkReport {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public Long getWorkOrderItemId() {
+        return workOrderItemId;
+    }
+
+    public void setWorkOrderItemId(Long workOrderItemId) {
+        this.workOrderItemId = workOrderItemId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 }

@@ -34,7 +34,7 @@ public class UserService {
      */
     public User findById(Long id)    {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("产品不存在"));
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
     }
 
     /**

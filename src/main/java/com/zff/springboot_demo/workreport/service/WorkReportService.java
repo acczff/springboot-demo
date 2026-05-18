@@ -2,6 +2,8 @@ package com.zff.springboot_demo.workreport.service;
 
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
+import com.zff.springboot_demo.workorder.entity.WorkOrderItem;
+import com.zff.springboot_demo.workorder.repository.WorkOrderItemRepository;
 import com.zff.springboot_demo.workreport.dto.WorkReportCreateRequest;
 import com.zff.springboot_demo.workreport.entity.WorkReport;
 import com.zff.springboot_demo.workreport.repository.WorkReportRepository;
@@ -17,10 +19,13 @@ public class WorkReportService {
 
     private final WorkReportRepository workReportRepository;
     private final UserService  userService;
+    private final WorkOrderItemRepository workOrderItemRepository;
 
-    public WorkReportService(WorkReportRepository workReportRepository, UserService userService) {
+    public WorkReportService(WorkReportRepository workReportRepository, UserService userService,
+                             WorkOrderItemRepository workOrderItemRepository) {
         this.workReportRepository = workReportRepository;
         this.userService = userService;
+        this.workOrderItemRepository = workOrderItemRepository;
     }
 
     public Page<WorkReport> findByWorkOrderId(Long workOrderId, Pageable pageable) {
@@ -32,7 +37,21 @@ public class WorkReportService {
     }
 
     @Transactional
-    public WorkReport create(WorkReportCreateRequest workReportCreateRequest,Long reportedBy) {
+    public WorkReport create(WorkReportCreateRequest workReportCreateRequest, Long reportedBy) {
+        // 校验：若绑定了产品明细，检查本次报工量不超过剩余量
+        Long itemId = workReportCreateRequest.getWorkOrderItemId();
+        if (itemId != null) {
+            WorkOrderItem item = workOrderItemRepository.findById(itemId)
+                    .orElseThrow(() -> new RuntimeException("工单产品明细不存在：" + itemId));
+            int remaining = item.getPlannedQty() - item.getCompletedQty();
+            if (remaining <= 0) {
+                throw new RuntimeException("产品【" + item.getProduct().getName() + "】已完成，无需再报工");
+            }
+            if (workReportCreateRequest.getReportedQty() > remaining) {
+                throw new RuntimeException("报工数量 " + workReportCreateRequest.getReportedQty()
+                        + " 超出剩余计划量 " + remaining);
+            }
+        }
         WorkReport workReport = new WorkReport();
         User user = userService.findById(reportedBy);
         workReport.setWorkOrderId(workReportCreateRequest.getWorkOrderId());
@@ -41,6 +60,8 @@ public class WorkReportService {
         workReport.setReportedByName(user.getUsername());
         workReport.setReportedTime(System.currentTimeMillis());
         workReport.setStatus("DRAFT");
+        workReport.setWorkOrderItemId(itemId);
+        workReport.setProductName(workReportCreateRequest.getProductName());
         return workReportRepository.save(workReport);
     }
 
@@ -85,6 +106,15 @@ public class WorkReportService {
         workReport.setReviewedBy(reviewedBy);
         workReport.setReviewedByName(userService.findById(reviewedBy).getUsername());
         workReport.setReviewedTime(System.currentTimeMillis());
+
+        // 审核通过 → 累加对应产品明细的已完成数量
+        if (workReport.getWorkOrderItemId() != null) {
+            workOrderItemRepository.findById(workReport.getWorkOrderItemId()).ifPresent(item -> {
+                item.setCompletedQty(item.getCompletedQty() + workReport.getReportedQty());
+                workOrderItemRepository.save(item);
+            });
+        }
+
         return workReportRepository.save(workReport);
     }
 

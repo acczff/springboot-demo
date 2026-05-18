@@ -10,6 +10,12 @@ public class WorkReportCreateRequest {
     @NotNull
     private Integer reportedQty;
 
+    /** 可选：按产品明细报工时填写 */
+    private Long workOrderItemId;
+
+    /** 产品名称快照，按产品明细报工时填写 */
+    private String productName;
+
     public Long getWorkOrderId() {
         return workOrderId;
     }
@@ -24,5 +30,21 @@ public class WorkReportCreateRequest {
 
     public void setReportedQty(Integer reportedQty) {
         this.reportedQty = reportedQty;
+    }
+
+    public Long getWorkOrderItemId() {
+        return workOrderItemId;
+    }
+
+    public void setWorkOrderItemId(Long workOrderItemId) {
+        this.workOrderItemId = workOrderItemId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 }
