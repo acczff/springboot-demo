@@ -72,8 +72,22 @@ public class WorkOrderController {
      */
     @PutMapping("/{id}/issue")
     public Result<WorkOrder> issue(@PathVariable Long id) {
-        // Service 内部会抛异常，这里完全不需要判断
         return Result.success("下发成功", workOrderService.issue(id));
+    }
+
+    @PutMapping("/{id}/start")
+    public Result<WorkOrder> start(@PathVariable Long id) {
+        return Result.success("开始生产", workOrderService.start(id));
+    }
+
+    @PutMapping("/{id}/complete")
+    public Result<WorkOrder> complete(@PathVariable Long id) {
+        return Result.success("完工", workOrderService.complete(id));
+    }
+
+    @PutMapping("/{id}/cancel")
+    public Result<WorkOrder> cancel(@PathVariable Long id) {
+        return Result.success("已取消", workOrderService.cancel(id));
     }
 
     /**

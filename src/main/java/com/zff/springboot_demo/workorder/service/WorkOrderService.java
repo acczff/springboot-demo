@@ -106,4 +106,31 @@ public class WorkOrderService {
         workOrderRepository.save(workOrder);
         workReportService.softDeleteByWorkOrderId(id);
     }
+
+    public WorkOrder start(Long id) {
+        WorkOrder workOrder = this.findById(id);
+        if (!"ISSUED".equals(workOrder.getStatus())) {
+            throw new RuntimeException("只有已下发状态的工单才能开始生产，当前状态：" + workOrder.getStatus());
+        }
+        workOrder.setStatus("IN_PROGRESS");
+        return workOrderRepository.save(workOrder);
+    }
+
+    public WorkOrder complete(Long id) {
+        WorkOrder workOrder = this.findById(id);
+        if (!"IN_PROGRESS".equals(workOrder.getStatus())) {
+            throw new RuntimeException("只有生产中的工单才能完工，当前状态：" + workOrder.getStatus());
+        }
+        workOrder.setStatus("COMPLETED");
+        return workOrderRepository.save(workOrder);
+    }
+
+    public WorkOrder cancel(Long id) {
+        WorkOrder workOrder = this.findById(id);
+        if (!"ISSUED".equals(workOrder.getStatus()) && !"IN_PROGRESS".equals(workOrder.getStatus())) {
+            throw new RuntimeException("只有已下发或生产中的工单才能取消，当前状态：" + workOrder.getStatus());
+        }
+        workOrder.setStatus("CANCELLED");
+        return workOrderRepository.save(workOrder);
+    }
 }

@@ -45,6 +45,10 @@
     {
       "key": "reportWorkOrderId",
       "value": ""
+    },
+    {
+      "key": "cancelOrderId",
+      "value": ""
     }
   ],
   "item": [
@@ -1154,6 +1158,198 @@
                   "var r=pm.response.json();",
                   "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
                   "pm.test('状态ISSUED',()=>pm.expect(r.data.status).to.eql('ISSUED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "27a 开始生产ISSUED→IN_PROGRESS",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{workOrderId}}/start",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{workOrderId}}",
+                "start"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('状态IN_PROGRESS',()=>pm.expect(r.data.status).to.eql('IN_PROGRESS'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "27b 完工IN_PROGRESS→COMPLETED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{workOrderId}}/complete",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{workOrderId}}",
+                "complete"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('状态COMPLETED',()=>pm.expect(r.data.status).to.eql('COMPLETED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "取消-S1 创建取消测试工单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"取消测试工单\",\"createdBy\":{{adminUserId}},\"workOrderItemRequests\":[{\"productId\":1,\"plannedQty\":5}]}"
+            },
+            "url": {
+              "raw": "{{base}}/api/work-orders",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.collectionVariables.set('cancelOrderId',r.data.id);",
+                  "console.log('取消测试工单ID:',r.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "取消-S2 下发取消测试工单",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{cancelOrderId}}/issue",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{cancelOrderId}}",
+                "issue"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('状态ISSUED',()=>pm.expect(r.data.status).to.eql('ISSUED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "27c 取消工单ISSUED→CANCELLED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/work-orders/{{cancelOrderId}}/cancel",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "work-orders",
+                "{{cancelOrderId}}",
+                "cancel"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r=pm.response.json();",
+                  "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+                  "pm.test('状态CANCELLED',()=>pm.expect(r.data.status).to.eql('CANCELLED'));"
                 ],
                 "type": "text/javascript"
               }
