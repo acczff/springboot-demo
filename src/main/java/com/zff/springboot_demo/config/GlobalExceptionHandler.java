@@ -1,10 +1,13 @@
 package com.zff.springboot_demo.config;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.exception.BusinessException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import org.slf4j.MDC;
 
 import java.io.IOException;
 
@@ -26,7 +29,7 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
                 .orElse("参数校验失败");
-        return Result.error(400, message);
+        return errorWithTraceId(400, message);
     }
 
     /**
@@ -34,7 +37,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public Result<String> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return Result.error(400, ex.getMessage() + "：处理业务参数不合法异常。");
+        return errorWithTraceId(400, ex.getMessage() + "：处理业务参数不合法异常。");
     }
 
     /**
@@ -42,7 +45,15 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(IOException.class)
     public Result<String> handleIOException(IOException ex) {
-        return Result.error(500, ex.getMessage() + "：处理文件读写异常。");
+        return errorWithTraceId(500, ex.getMessage() + "：处理文件读写异常。");
+    }
+
+    /**
+     * 处理业务异常（账号不存在、密码错误、权限不足等），保留自定义状态码。
+     */
+    @ExceptionHandler(BusinessException.class)
+    public Result<String> handleBusinessException(BusinessException ex) {
+        return errorWithTraceId(ex.getCode(), ex.getMessage());
     }
 
     /**
@@ -50,7 +61,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public Result<String> handleRuntimeException(RuntimeException ex) {
-        return Result.error(ex.getMessage() + "： 处理未单独声明的运行时异常。");
+        return errorWithTraceId(500, ex.getMessage() + "： 处理未单独声明的运行时异常。");
     }
 
     /**
@@ -58,6 +69,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler
     public Result<String> handleMessageNotReadable(HttpMessageNotReadableException ex) {
-        return Result.error(400, "请求体不能为空或格式错误");
+        return errorWithTraceId(400, "请求体不能为空或格式错误");
     }
+
+    private Result<String> errorWithTraceId(Integer code, String message) {
+        return Result.error(code, message, MDC.get("traceId"));
+    }
+
 }

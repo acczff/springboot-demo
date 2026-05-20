@@ -23,6 +23,10 @@ public class Result<T> {
      * 实际数据（泛型，可以是任何类型）
      */
     private T data;
+    /**
+     * 请求追踪 ID
+     */
+    private String traceId;
     // 构造方法（无参）
     public Result() {
     }
@@ -30,6 +34,12 @@ public class Result<T> {
         this.code = code;
         this.message = message;
         this.data = data;
+    }
+    public Result(Integer code, String message, T data, String traceId) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+        this.traceId = traceId;
     }
     // ========== 静态工厂方法 ==========
     /**
@@ -70,6 +80,13 @@ public class Result<T> {
     public static <T> Result<T> error(Integer code, String message, T data) {
         return new Result<T>(code, message, data);
     }
+
+    /**
+     * 错误响应（带 traceId）
+     */
+    public static <T> Result<T> error(Integer code, String message, String traceId) {
+        return new Result<T>(code, message, null, traceId);
+    }
     // ========== Getter 和 Setter 方法 ==========
     public Integer getCode() {
         return code;
@@ -88,5 +105,11 @@ public class Result<T> {
     }
     public void setData(T data) {
         this.data = data;
+    }
+    public String getTraceId() {
+        return traceId;
+    }
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
     }
 }

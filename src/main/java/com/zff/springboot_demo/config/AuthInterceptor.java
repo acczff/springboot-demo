@@ -12,6 +12,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
+    private final TokenBlacklistService tokenBlacklistService;
+
+    public AuthInterceptor(TokenBlacklistService tokenBlacklistService) {
+        this.tokenBlacklistService = tokenBlacklistService;
+    }
+
     /**
      * 请求进入 Controller 前校验 token，并把当前用户 ID 写入 request。
      */
@@ -23,6 +29,15 @@ public class AuthInterceptor implements HandlerInterceptor {
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"code\":401,\"message\":\"未登录，请先登录\",\"data\":null}");
+            return false;
+        }
+
+        // 查黑名单：退出后的 token 直接拒绝
+        String rawToken = token.substring("Bearer ".length());
+        if (tokenBlacklistService.isBlacklisted(rawToken)) {
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":401,\"message\":\"token 已失效，请重新登录\",\"data\":null}");
             return false;
         }
 

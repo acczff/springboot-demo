@@ -1,16 +1,25 @@
 package com.zff.springboot_demo.user.service;
 
+import com.zff.springboot_demo.config.TokenBlacklistService;
+import com.zff.springboot_demo.dto.login.LoginRequest;
+import com.zff.springboot_demo.dto.login.LoginResponse;
+import com.zff.springboot_demo.exception.BusinessException;
+import com.zff.springboot_demo.exception.ErrorCode;
+import com.zff.springboot_demo.permission.entity.Permission;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.role.repository.RoleRepository;
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.repository.UserRepository;
 import com.zff.springboot_demo.util.PasswordEncoder;
+import com.zff.springboot_demo.util.TokenUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 用户业务逻辑层
@@ -19,12 +28,13 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final RoleRepository roleRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, TokenBlacklistService tokenBlacklistService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     /**
@@ -34,7 +44,7 @@ public class UserService {
      */
     public User findById(Long id)    {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
     }
 
     /**
@@ -113,8 +123,8 @@ public class UserService {
      * 查询用户已绑定的角色列表。
      */
     public List<Role> getUserRoles(Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
         return user.getRoles();
     }
 
@@ -124,9 +134,61 @@ public class UserService {
     @Transactional
     public User assignRoles(Long userId, List<Long> roleIds) {
         User user = userRepository.findById(userId).
-                orElseThrow(() -> new RuntimeException("角色不存在"));
+                orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
         List<Role> roles = roleRepository.findAllById(roleIds);
         user.setRoles(roles);
         return userRepository.save(user);
+    }
+
+    /**
+     * 登录校验：账号密码验证，返回登录响应。
+     */
+    public LoginResponse login(LoginRequest request) {
+        User user = findByUsername(request.getAccount());
+        if (user == null) throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号不存在");
+        if (!PasswordEncoder.matches(request.getPassword(), user.getPassword()))
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "密码错误");
+        return buildLoginResponse(user, TokenUtil.generateToken(user.getId()));
+    }
+
+    /**
+     * 退出登录：把 token 加入 Redis 黑名单，24 小时内不可再用。
+     */
+    public void logout(String token) {
+        String rawToken = token.substring("Bearer ".length());
+        tokenBlacklistService.blacklist(rawToken, 86400);
+    }
+
+    /**
+     * 获取当前登录用户信息（token 校验 + 用户查询）。
+     */
+    public LoginResponse getMe(String token) {
+        Optional<Long> userId = TokenUtil.tryExtractUserId(token);
+        if (userId.isEmpty()) throw new BusinessException(ErrorCode.UNAUTHORIZED, "未登录或 token 失效");
+        User user = findById(userId.get());
+        return buildLoginResponse(user, null);
+    }
+
+    /**
+     * 组装登录响应（login 和 getMe 共用）。
+     * token 为 null 时不填充 token 字段（me 接口不需要重新签发）。
+     */
+    private LoginResponse buildLoginResponse(User user, String token) {
+        LoginResponse response = new LoginResponse();
+        if (token != null) response.setToken(token);
+        response.setUserId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toList());
+        response.setRoles(roleNames);
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(Permission::getCode)
+                .distinct()
+                .collect(Collectors.toList());
+        response.setPermissions(permissions);
+        return response;
     }
 }

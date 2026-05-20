@@ -15,11 +15,19 @@ spring:
   # JPA 配置
   jpa:
     hibernate:
-      ddl-auto: update  # 自动更新表结构（开发环境使用）
+      ddl-auto: validate  # 自动校验表结构（开发环境使用）
     show-sql: false      # 控制台显示 SQL（学习用）
     properties:
       hibernate:
         format_sql: true  # 格式化 SQL 输出
+
+  flyway:
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 server:
   port: 8080  # 服务端口

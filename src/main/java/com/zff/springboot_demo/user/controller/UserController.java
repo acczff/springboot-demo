@@ -3,13 +3,9 @@ package com.zff.springboot_demo.user.controller;
 import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.dto.PageResult;
 import com.zff.springboot_demo.operationlog.LogOperation;
-import com.zff.springboot_demo.operationlog.entity.OperationLog;
-import com.zff.springboot_demo.operationlog.service.OperationLogService;
 import com.zff.springboot_demo.role.entity.Role;
 import com.zff.springboot_demo.user.entity.User;
-import com.zff.springboot_demo.user.repository.UserRepository;
 import com.zff.springboot_demo.user.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -57,12 +53,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public Result<User> getUserById(@PathVariable Long id) {
-        User user = userService.findById(id);
-        if (user == null) {
-            return Result.error(404,"用户不存在");
-        }else {
-            return Result.success("查询成功", user);
-        }
+        return Result.success("查询成功", userService.findById(id));
     }
 
     /**
@@ -72,9 +63,7 @@ public class UserController {
      */
     @GetMapping("/{id}/roles")
     public Result<List<Role>> getUserRoles(@PathVariable Long id) {
-        List<Role> roles = userService.getUserRoles(id);
-        if (roles == null) return Result.error(404, "用户不存在");
-        return Result.success("查询成功", roles);
+        return Result.success("查询成功", userService.getUserRoles(id));
     }
 
     /**
@@ -86,9 +75,7 @@ public class UserController {
     @LogOperation("绑定角色")
     @PutMapping("/{id}/roles")
     public Result<User> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
-        User user = userService.assignRoles(id, roleIds);
-        if (user == null) return Result.error(404, "用户不存在");
-        return Result.success("角色绑定成功", user);
+        return Result.success("角色绑定成功", userService.assignRoles(id, roleIds));
     }
 
     /**
@@ -111,11 +98,7 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public Result<User> updateUser(@PathVariable Long id,@RequestBody User user) {
-        User updateUser =  userService.updateUser(id, user);
-        if (updateUser == null) {
-            return Result.error(404, "用户为空");
-        }
-        return Result.success("用户更新成功", updateUser);
+        return Result.success("用户更新成功", userService.updateUser(id, user));
     }
 
     /**
