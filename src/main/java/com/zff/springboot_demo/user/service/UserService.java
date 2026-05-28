@@ -1,5 +1,7 @@
 package com.zff.springboot_demo.user.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zff.springboot_demo.config.TokenBlacklistService;
 import com.zff.springboot_demo.dto.login.LoginRequest;
 import com.zff.springboot_demo.dto.login.LoginResponse;
@@ -14,11 +16,13 @@ import com.zff.springboot_demo.util.PasswordEncoder;
 import com.zff.springboot_demo.util.TokenUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -30,11 +34,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, TokenBlacklistService tokenBlacklistService) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, TokenBlacklistService tokenBlacklistService, ObjectMapper objectMapper, RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.objectMapper = objectMapper;
+        this.redisTemplate = redisTemplate;
     }
 
     /**
@@ -93,16 +101,16 @@ public class UserService {
      * @return 更新后的用户对象，不存在返回 null
      */
     public User updateUser(Long id, User user) {
-        return userRepository.findById(id)
-                .map(existingUser -> {
-                    existingUser.setUsername(user.getUsername());
-                    existingUser.setEmail(user.getEmail());
-                    if (user.getPassword() != null && !user.getPassword().isBlank()) {
-                        existingUser.setPassword(PasswordEncoder.encode(user.getPassword()));
-                    }
-                    return userRepository.save(existingUser);
-                })
-                .orElse(null);
+        User existingUser = userRepository.findById(id).orElse(null);
+        if (existingUser == null) return null;
+        existingUser.setUsername(user.getUsername());
+        existingUser.setEmail(user.getEmail());
+        if (user.getPassword() != null && !user.getPassword().isBlank()) {
+            existingUser.setPassword(PasswordEncoder.encode(user.getPassword()));
+        }
+        User saved = userRepository.save(existingUser);
+        evictUserCache(id);  // 用户名/邮箱变了，缓存失效
+        return saved;
     }
 
     /**
@@ -137,7 +145,9 @@ public class UserService {
                 orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
         List<Role> roles = roleRepository.findAllById(roleIds);
         user.setRoles(roles);
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        evictUserCache(userId);  // 角色权限变了，缓存失效
+        return saved;
     }
 
     /**
@@ -165,8 +175,8 @@ public class UserService {
     public LoginResponse getMe(String token) {
         Optional<Long> userId = TokenUtil.tryExtractUserId(token);
         if (userId.isEmpty()) throw new BusinessException(ErrorCode.UNAUTHORIZED, "未登录或 token 失效");
-        User user = findById(userId.get());
-        return buildLoginResponse(user, null);
+
+        return getUserFromCache(userId.get());
     }
 
     /**
@@ -190,5 +200,31 @@ public class UserService {
                 .collect(Collectors.toList());
         response.setPermissions(permissions);
         return response;
+    }
+
+    private LoginResponse getUserFromCache(Long userId) {
+        String key = "user:info:" + userId;
+        String cached = redisTemplate.opsForValue().get(key);
+        try {
+            if (cached == null) {
+                // cache miss：查 DB，写入 Redis
+                User user = findById(userId);
+                LoginResponse resp = buildLoginResponse(user, null);
+                String json = objectMapper.writeValueAsString(resp);
+                redisTemplate.opsForValue().set(key, json, 1800, TimeUnit.SECONDS);
+                return resp;
+            } else {
+                // cache hit：直接反序列化返回
+                return objectMapper.readValue(cached, LoginResponse.class);
+            }
+        } catch (JsonProcessingException e) {
+            // 降级：序列化失败，直接查 DB
+            User user = findById(userId);
+            return buildLoginResponse(user, null);
+        }
+    }
+
+    public void evictUserCache(Long userId) {
+        redisTemplate.delete("user:info:" + userId);
     }
 }
