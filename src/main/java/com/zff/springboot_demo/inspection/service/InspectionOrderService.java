@@ -9,6 +9,8 @@ import com.zff.springboot_demo.inspection.repository.InspectionOrderRepository;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.workorder.entity.WorkOrder;
 import com.zff.springboot_demo.workorder.service.WorkOrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -38,6 +40,16 @@ public class InspectionOrderService {
     /** 查询工单下所有质检单 */
     public List<InspectionOrder> findByWorkOrderId(Long workOrderId) {
         return inspectionOrderRepository.findByWorkOrderId(workOrderId);
+    }
+
+    /**
+     * 按状态分页查询质检单；状态为空时查全部。
+     */
+    public Page<InspectionOrder> findByStatus(String status, Pageable pageable) {
+        if (status == null || status.isBlank()) {
+            return inspectionOrderRepository.findAll(pageable);
+        }
+        return inspectionOrderRepository.findByStatus(status, pageable);
     }
 
     /**

@@ -1,12 +1,15 @@
 package com.zff.springboot_demo.inspection.controller;
 
 import com.zff.springboot_demo.Result;
+import com.zff.springboot_demo.dto.PageResult;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderCreateRequest;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderFailRequest;
 import com.zff.springboot_demo.inspection.entity.InspectionOrder;
 import com.zff.springboot_demo.inspection.service.InspectionOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,10 +28,17 @@ public class InspectionOrderController {
         return Result.success("查询成功", inspectionOrderService.findById(id));
     }
 
-    /** 查询工单下所有质检单 */
+    /** 查询质检单列表（按工单查 或 按状态分页查） */
     @GetMapping
-    public Result listByWorkOrder(@RequestParam Long workOrderId) {
-        return Result.success("查询成功", inspectionOrderService.findByWorkOrderId(workOrderId));
+    public Result list(
+            @RequestParam(required = false) Long workOrderId,
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        if (workOrderId != null) {
+            return Result.success("查询成功", inspectionOrderService.findByWorkOrderId(workOrderId));
+        }
+        Page<InspectionOrder> page = inspectionOrderService.findByStatus(status, pageable);
+        return Result.success("查询成功", new PageResult<>(page.getContent(), page.getTotalElements()));
     }
 
     /**
