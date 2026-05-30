@@ -45,13 +45,22 @@ public class InspectionOrderService {
     }
 
     /**
-     * 按状态分页查询质检单；状态为空时查全部。
+     * 按状态分页查询质检单。
+     * 数据级权限：ADMIN 看全部；其他角色只看自己（inspectorId = currentUserId）。
      */
-    public Page<InspectionOrder> findByStatus(String status, Pageable pageable) {
-        if (status == null || status.isBlank()) {
-            return inspectionOrderRepository.findAll(pageable);
+    public Page<InspectionOrder> findByStatus(String status, Pageable pageable, Long currentUserId, boolean isAdmin) {
+        boolean hasStatus = status != null && !status.isBlank();
+        if (isAdmin) {
+            // 管理员：看全部
+            return hasStatus
+                    ? inspectionOrderRepository.findByStatus(status, pageable)
+                    : inspectionOrderRepository.findAll(pageable);
+        } else {
+            // 非管理员：只看自己的
+            return hasStatus
+                    ? inspectionOrderRepository.findByInspectorIdAndStatus(currentUserId, status, pageable)
+                    : inspectionOrderRepository.findByInspectorId(currentUserId, pageable);
         }
-        return inspectionOrderRepository.findByStatus(status, pageable);
     }
 
     /**

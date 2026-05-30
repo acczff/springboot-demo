@@ -7,6 +7,7 @@ import com.zff.springboot_demo.inspection.dto.InspectionOrderFailRequest;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderReviewRequest;
 import com.zff.springboot_demo.inspection.entity.InspectionOrder;
 import com.zff.springboot_demo.inspection.service.InspectionOrderService;
+import com.zff.springboot_demo.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class InspectionOrderController {
 
     private final InspectionOrderService inspectionOrderService;
+    private final UserService userService;
 
-    public InspectionOrderController(InspectionOrderService inspectionOrderService) {
+    public InspectionOrderController(InspectionOrderService inspectionOrderService, UserService userService) {
         this.inspectionOrderService = inspectionOrderService;
+        this.userService = userService;
     }
 
     /** 查询质检单详情 */
@@ -29,16 +32,23 @@ public class InspectionOrderController {
         return Result.success("查询成功", inspectionOrderService.findById(id));
     }
 
-    /** 查询质检单列表（按工单查 或 按状态分页查） */
+    /** 查询质检单列表（按工单查 或 按状态分页查）
+     *  数据级权限：ADMIN 看全部；其他角色只看自己（inspectorId = 当前用户）
+     */
     @GetMapping
     public Result list(
             @RequestParam(required = false) Long workOrderId,
             @RequestParam(required = false) String status,
-            Pageable pageable) {
+            Pageable pageable,
+            HttpServletRequest httpRequest) {
         if (workOrderId != null) {
             return Result.success("查询成功", inspectionOrderService.findByWorkOrderId(workOrderId));
         }
-        Page<InspectionOrder> page = inspectionOrderService.findByStatus(status, pageable);
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        boolean isAdmin = userService.getUserRoles(currentUserId)
+                .stream()
+                .anyMatch(r -> r.getName().equals("ADMIN"));
+        Page<InspectionOrder> page = inspectionOrderService.findByStatus(status, pageable, currentUserId, isAdmin);
         return Result.success("查询成功", new PageResult<>(page.getContent(), page.getTotalElements()));
     }
 
