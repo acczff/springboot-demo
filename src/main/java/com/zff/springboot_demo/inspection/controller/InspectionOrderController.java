@@ -4,6 +4,7 @@ import com.zff.springboot_demo.Result;
 import com.zff.springboot_demo.dto.PageResult;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderCreateRequest;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderFailRequest;
+import com.zff.springboot_demo.inspection.dto.InspectionOrderReviewRequest;
 import com.zff.springboot_demo.inspection.entity.InspectionOrder;
 import com.zff.springboot_demo.inspection.service.InspectionOrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -74,5 +75,20 @@ public class InspectionOrderController {
     public Result fail(@PathVariable Long id,
                        @RequestBody @Valid InspectionOrderFailRequest request) {
         return Result.success("检验不合格", inspectionOrderService.fail(id, request));
+    }
+
+    /** 发起评审：FAIL → REVIEWING */
+    @PutMapping("/{id}/start-review")
+    public Result startReview(@PathVariable Long id) {
+        return Result.success("已发起评审", inspectionOrderService.startReview(id));
+    }
+
+    /** 完成评审：REVIEWING → REVIEWED（必须填写评审意见和处置方式） */
+    @PutMapping("/{id}/review")
+    public Result review(@PathVariable Long id,
+                         @RequestBody @Valid InspectionOrderReviewRequest request,
+                         HttpServletRequest httpRequest) {
+        Long reviewerId = (Long) httpRequest.getAttribute("currentUserId");
+        return Result.success("评审完成", inspectionOrderService.review(id, request, reviewerId));
     }
 }

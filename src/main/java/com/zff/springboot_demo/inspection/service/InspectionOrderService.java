@@ -4,6 +4,7 @@ import com.zff.springboot_demo.exception.BusinessException;
 import com.zff.springboot_demo.exception.ErrorCode;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderCreateRequest;
 import com.zff.springboot_demo.inspection.dto.InspectionOrderFailRequest;
+import com.zff.springboot_demo.inspection.dto.InspectionOrderReviewRequest;
 import com.zff.springboot_demo.inspection.entity.InspectionOrder;
 import com.zff.springboot_demo.inspection.repository.InspectionOrderRepository;
 import com.zff.springboot_demo.user.service.UserService;
@@ -115,6 +116,37 @@ public class InspectionOrderService {
         order.setStatus("FAIL");
         order.setFailReason(request.getFailReason());
         order.setInspectedAt(LocalDateTime.now());
+        return inspectionOrderRepository.save(order);
+    }
+
+    /**
+     * 发起评审：FAIL → REVIEWING。
+     */
+    public InspectionOrder startReview(Long id) {
+        InspectionOrder order = findById(id);
+        if (!"FAIL".equals(order.getStatus())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "只有不合格的质检单才能发起评审");
+        }
+        order.setStatus("REVIEWING");
+        return inspectionOrderRepository.save(order);
+    }
+
+    /**
+     * 完成评审：REVIEWING → REVIEWED。
+     * 写入评审人、评审意见、处置方式、评审时间。
+     */
+    public InspectionOrder review(Long id, InspectionOrderReviewRequest request, Long reviewerId) {
+        InspectionOrder order = findById(id);
+        if (!"REVIEWING".equals(order.getStatus())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "只有评审中的质检单才能完成评审");
+        }
+        String reviewerName = userService.findById(reviewerId).getUsername();
+        order.setStatus("REVIEWED");
+        order.setReviewerId(reviewerId);
+        order.setReviewerName(reviewerName);
+        order.setReviewOpinion(request.getReviewOpinion());
+        order.setDisposal(request.getDisposal());
+        order.setReviewedAt(LocalDateTime.now());
         return inspectionOrderRepository.save(order);
     }
 }

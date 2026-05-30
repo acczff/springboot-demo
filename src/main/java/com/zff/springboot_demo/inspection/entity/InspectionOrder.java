@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 /**
  * 质检单实体。
- * 状态流：PENDING（待检）→ INSPECTING（检验中）→ PASS（合格）/ FAIL（不合格）
+ * 状态流：PENDING（待检）→ INSPECTING（检验中）→ PASS（合格）/ FAIL（不合格）→ REVIEWING（评审中）→ REVIEWED（已评审）
  */
 @Entity
 @Table(name = "inspection_orders")
@@ -38,6 +38,26 @@ public class InspectionOrder {
     /** 检验完成时间（PASS / FAIL 时写入） */
     @Column(name = "inspected_at")
     private LocalDateTime inspectedAt;
+
+    /** 评审人 ID（FAIL → REVIEWING 时写入） */
+    @Column(name = "reviewer_id")
+    private Long reviewerId;
+
+    /** 评审人姓名快照 */
+    @Column(name = "reviewer_name", length = 50)
+    private String reviewerName;
+
+    /** 评审意见 */
+    @Column(name = "review_opinion", length = 500)
+    private String reviewOpinion;
+
+    /** 处置方式：REWORK（返工）/ CONCESSION（让步接收）/ SCRAP（报废） */
+    @Column(name = "disposal", length = 20)
+    private String disposal;
+
+    /** 评审完成时间 */
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
 
     /** 创建人 ID（从 token 自动注入） */
     @Column(name = "created_by", nullable = false)
@@ -73,6 +93,21 @@ public class InspectionOrder {
 
     public LocalDateTime getInspectedAt() { return inspectedAt; }
     public void setInspectedAt(LocalDateTime inspectedAt) { this.inspectedAt = inspectedAt; }
+
+    public Long getReviewerId() { return reviewerId; }
+    public void setReviewerId(Long reviewerId) { this.reviewerId = reviewerId; }
+
+    public String getReviewerName() { return reviewerName; }
+    public void setReviewerName(String reviewerName) { this.reviewerName = reviewerName; }
+
+    public String getReviewOpinion() { return reviewOpinion; }
+    public void setReviewOpinion(String reviewOpinion) { this.reviewOpinion = reviewOpinion; }
+
+    public String getDisposal() { return disposal; }
+    public void setDisposal(String disposal) { this.disposal = disposal; }
+
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
 
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
