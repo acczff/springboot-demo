@@ -49,6 +49,14 @@
     {
       "key": "cancelOrderId",
       "value": ""
+    },
+    {
+      "key": "inspectionOrderId",
+      "value": ""
+    },
+    {
+      "key": "inspectionOrderId2",
+      "value": ""
     }
   ],
   "item": [
@@ -2043,6 +2051,197 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "质检模块",
+      "item": [
+        {
+          "name": "质检-S1 创建质检单(FAIL路径)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"},{"key": "Authorization","value": "Bearer {{token}}"}],
+            "body": {"mode": "raw","raw": "{\"workOrderId\":{{reportWorkOrderId}}}"},
+            "url": {"raw": "{{base}}/api/inspection-orders","host": ["{{base}}"],"path": ["api","inspection-orders"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('创建成功200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PENDING',()=>pm.expect(r.data.status).to.eql('PENDING'));",
+            "pm.collectionVariables.set('inspectionOrderId',r.data.id);",
+            "console.log('质检单ID:',r.data.id);"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S2 查详情",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('id正确',()=>pm.expect(r.data.id).to.eql(Number(pm.collectionVariables.get('inspectionOrderId'))));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S3 开始检验 PENDING→INSPECTING",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/start","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","start"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态INSPECTING',()=>pm.expect(r.data.status).to.eql('INSPECTING'));",
+            "pm.test('inspectorId有值',()=>pm.expect(r.data.inspectorId).to.be.a('number'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S4 判不合格 INSPECTING→FAIL",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"},{"key": "Content-Type","value": "application/json"}],
+            "body": {"mode": "raw","raw": "{\"failReason\":\"尺寸超差\"}"},
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/fail","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","fail"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态FAIL',()=>pm.expect(r.data.status).to.eql('FAIL'));",
+            "pm.test('failReason有值',()=>pm.expect(r.data.failReason).to.be.a('string'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S5 发起评审 FAIL→REVIEWING",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/start-review","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","start-review"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态REVIEWING',()=>pm.expect(r.data.status).to.eql('REVIEWING'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S6 完成评审 REVIEWING→REVIEWED",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"},{"key": "Content-Type","value": "application/json"}],
+            "body": {"mode": "raw","raw": "{\"reviewOpinion\":\"尺寸超差超出允许范围，需返工\",\"disposal\":\"REWORK\"}"},
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/review","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","review"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态REVIEWED',()=>pm.expect(r.data.status).to.eql('REVIEWED'));",
+            "pm.test('reviewerId有值',()=>pm.expect(r.data.reviewerId).to.be.a('number'));",
+            "pm.test('disposal=REWORK',()=>pm.expect(r.data.disposal).to.eql('REWORK'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S7 执行处置 REVIEWED→DISPOSED(REWORK建新单)",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/dispose","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","dispose"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态DISPOSED',()=>pm.expect(r.data.status).to.eql('DISPOSED'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S8 验证REWORK新PENDING单已生成",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base}}/api/inspection-orders?status=PENDING&page=0&size=20",
+              "host": ["{{base}}"],"path": ["api","inspection-orders"],
+              "query": [{"key": "status","value": "PENDING"},{"key": "page","value": "0"},{"key": "size","value": "20"}]
+            }
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('有PENDING单(REWORK自动创建)',()=>pm.expect(r.data.total).to.be.at.least(1));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S9 异常：非REVIEWED状态调dispose应400",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId}}/dispose","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId}}","dispose"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('重复dispose应400',()=>pm.expect(r.code).to.eql(400));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S10 创建第二单(PASS路径)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"},{"key": "Authorization","value": "Bearer {{token}}"}],
+            "body": {"mode": "raw","raw": "{\"workOrderId\":{{reportWorkOrderId}}}"},
+            "url": {"raw": "{{base}}/api/inspection-orders","host": ["{{base}}"],"path": ["api","inspection-orders"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.collectionVariables.set('inspectionOrderId2',r.data.id);"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S11 开始检验2",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId2}}/start","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId2}}","start"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('INSPECTING',()=>pm.expect(r.data.status).to.eql('INSPECTING'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S12 判合格 INSPECTING→PASS",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inspection-orders/{{inspectionOrderId2}}/pass","host": ["{{base}}"],"path": ["api","inspection-orders","{{inspectionOrderId2}}","pass"]}
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PASS',()=>pm.expect(r.data.status).to.eql('PASS'));"
+          ],"type": "text/javascript"}}]
+        },
+        {
+          "name": "质检-S13 列表按状态筛选PASS",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization","value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base}}/api/inspection-orders?status=PASS&page=0&size=10",
+              "host": ["{{base}}"],"path": ["api","inspection-orders"],
+              "query": [{"key": "status","value": "PASS"},{"key": "page","value": "0"},{"key": "size","value": "10"}]
+            }
+          },
+          "event": [{"listen": "test","script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200',()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('total>=1',()=>pm.expect(r.data.total).to.be.at.least(1));",
+            "r.data.list.forEach(function(o){pm.test('每条状态=PASS',()=>pm.expect(o.status).to.eql('PASS'));});"
+          ],"type": "text/javascript"}}]
         }
       ]
     },

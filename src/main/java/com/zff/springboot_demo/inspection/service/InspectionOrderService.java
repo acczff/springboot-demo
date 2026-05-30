@@ -13,6 +13,7 @@ import com.zff.springboot_demo.workorder.service.WorkOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -148,5 +149,30 @@ public class InspectionOrderService {
         order.setDisposal(request.getDisposal());
         order.setReviewedAt(LocalDateTime.now());
         return inspectionOrderRepository.save(order);
+    }
+
+    /**
+     * 处置执行：REVIEWED → DISPOSED。
+     * REWORK 时额外创建一张新的 PENDING 质检单，两步原子执行。
+     */
+    @Transactional
+    public InspectionOrder dispose(Long id) {
+        InspectionOrder order = findById(id);
+        if (!"REVIEWED".equals(order.getStatus())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "只有已评审的质检单才能执行处置");
+        }
+        order.setStatus("DISPOSED");
+        inspectionOrderRepository.save(order);
+
+        if ("REWORK".equals(order.getDisposal())) {
+            InspectionOrder newOrder = new InspectionOrder();
+            newOrder.setWorkOrderId(order.getWorkOrderId());
+            newOrder.setCreatedBy(order.getCreatedBy());
+            newOrder.setCreatedByName(order.getCreatedByName());
+            newOrder.setCreatedTime(LocalDateTime.now());
+            // status 默认 PENDING（实体字段默认值）
+            inspectionOrderRepository.save(newOrder);
+        }
+        return order;
     }
 }

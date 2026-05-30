@@ -91,4 +91,10 @@ public class InspectionOrderController {
         Long reviewerId = (Long) httpRequest.getAttribute("currentUserId");
         return Result.success("评审完成", inspectionOrderService.review(id, request, reviewerId));
     }
+
+    /** 执行处置：REVIEWED → DISPOSED（REWORK 时自动创建新质检单） */
+    @PutMapping("/{id}/dispose")
+    public Result dispose(@PathVariable Long id) {
+        return Result.success("处置完成", inspectionOrderService.dispose(id));
+    }
 }
