@@ -51,16 +51,24 @@ public class InspectionOrderService {
     public Page<InspectionOrder> findByStatus(String status, Pageable pageable, Long currentUserId, boolean isAdmin) {
         boolean hasStatus = status != null && !status.isBlank();
         if (isAdmin) {
-            // 管理员：看全部
             return hasStatus
                     ? inspectionOrderRepository.findByStatus(status, pageable)
                     : inspectionOrderRepository.findAll(pageable);
         } else {
-            // 非管理员：只看自己的
             return hasStatus
                     ? inspectionOrderRepository.findByInspectorIdAndStatus(currentUserId, status, pageable)
                     : inspectionOrderRepository.findByInspectorId(currentUserId, pageable);
         }
+    }
+
+    /**
+     * 按状态 + 分页查询（不校验数据级权限，供 admin 查看全部时用）。
+     */
+    public Page<InspectionOrder> findByStatusNoAuth(String status, Pageable pageable) {
+        if (status == null || status.isBlank()) {
+            return inspectionOrderRepository.findAll(pageable);
+        }
+        return inspectionOrderRepository.findByStatus(status, pageable);
     }
 
     /**
