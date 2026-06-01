@@ -2,7 +2,7 @@
   "info": {
     "name": "SpringBoot Demo 完整接口测试集",
     "_postman_id": "springboot-demo-full-suite",
-    "description": "覆盖全部模块：认证/用户/角色/权限/菜单/工单/报工/日志，共40个用例",
+    "description": "覆盖全部模块：认证/用户/角色/权限/菜单/工单/报工/质检/日志/盘点，共52个用例",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -56,6 +56,22 @@
     },
     {
       "key": "inspectionOrderId2",
+      "value": ""
+    },
+    {
+      "key": "tokenZff",
+      "value": ""
+    },
+    {
+      "key": "checkPlanId",
+      "value": ""
+    },
+    {
+      "key": "checkItemId",
+      "value": ""
+    },
+    {
+      "key": "checkPlanId2",
       "value": ""
     }
   ],
@@ -217,6 +233,21 @@
               }
             }
           ]
+        },
+        {
+          "name": "04b 登录zff(非ADMIN，用于权限测试)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"account\":\"zff\",\"password\":\"123456\"}"},
+            "url": {"raw": "{{base}}/api/auth/login", "host": ["{{base}}"], "path": ["api","auth","login"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('zff登录200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.collectionVariables.set('tokenZff', r.data.token);",
+            "console.log('zff token:', r.data.token);"
+          ], "type": "text/javascript"}}]
         },
         {
           "name": "05 退出登录",
@@ -2292,6 +2323,196 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "盘点模块",
+      "item": [
+        {
+          "name": "盘点-S1 非ADMIN创建计划(应403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{tokenZff}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"productIds\":[1]}"},
+            "url": {"raw": "{{base}}/api/check-plans", "host": ["{{base}}"], "path": ["api","check-plans"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('非ADMIN创建应403', ()=>pm.expect(r.code).to.eql(403));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S2 ADMIN创建盘点计划",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"productIds\":[1]}"},
+            "url": {"raw": "{{base}}/api/check-plans", "host": ["{{base}}"], "path": ["api","check-plans"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('创建成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PENDING', ()=>pm.expect(r.data.status).to.eql('PENDING'));",
+            "pm.collectionVariables.set('checkPlanId', r.data.id);",
+            "console.log('盘点计划ID:', r.data.id);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S3 非ADMIN开始盘点 PENDING→IN_PROGRESS",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/start", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","start"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('开始成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态IN_PROGRESS', ()=>pm.expect(r.data.status).to.eql('IN_PROGRESS'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S4 查明细列表(获取itemId)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/items", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","items"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('明细不为空', ()=>pm.expect(r.data.length).to.be.at.least(1));",
+            "pm.collectionVariables.set('checkItemId', r.data[0].id);",
+            "pm.test('systemQuantity有值', ()=>pm.expect(r.data[0].systemQuantity).to.be.a('number'));",
+            "pm.test('actualQuantity为null', ()=>pm.expect(r.data[0].actualQuantity).to.be.null);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S5 非ADMIN录入实盘数",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{tokenZff}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"actualQuantity\":8}"},
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/items/{{checkItemId}}/record", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","items","{{checkItemId}}","record"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('录入成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('actualQuantity=8', ()=>pm.expect(r.data.actualQuantity).to.eql(8));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S6 非ADMIN提交 IN_PROGRESS→PENDING_REVIEW",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/submit", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","submit"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('提交成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PENDING_REVIEW', ()=>pm.expect(r.data.status).to.eql('PENDING_REVIEW'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S6a 验证差异已计算",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/items", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","items"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('difference已写入', ()=>pm.expect(r.data[0].difference).to.be.a('number'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S7 非ADMIN审核(应403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{tokenZff}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"reviewNote\":\"\"}"},
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/review", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","review"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('非ADMIN审核应403', ()=>pm.expect(r.code).to.eql(403));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S8 ADMIN审核 PENDING_REVIEW→COMPLETED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"reviewNote\":\"实物确认，库存已修正\"}"},
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId}}/review", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId}}","review"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('审核成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态COMPLETED', ()=>pm.expect(r.data.status).to.eql('COMPLETED'));",
+            "pm.test('reviewedBy有值', ()=>pm.expect(r.data.reviewedBy).to.be.a('number'));",
+            "pm.test('reviewNote有值', ()=>pm.expect(r.data.reviewNote).to.be.a('string'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S9 验证库存已更新为实盘数",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inventory", "host": ["{{base}}"], "path": ["api","inventory"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('库存列表不为空', ()=>pm.expect(r.data.length).to.be.at.least(1));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S10 异常：未录完就提交应400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"productIds\":[1]}"},
+            "url": {"raw": "{{base}}/api/check-plans", "host": ["{{base}}"], "path": ["api","check-plans"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('新建计划200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.collectionVariables.set('checkPlanId2', r.data.id);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "盘点-S11 未录完直接submit应400",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/check-plans/{{checkPlanId2}}/start", "host": ["{{base}}"], "path": ["api","check-plans","{{checkPlanId2}}","start"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('start成功', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.collectionVariables.set('checkPlanId2Status', r.data.status);"
+          ], "type": "text/javascript"}}]
         }
       ]
     }
