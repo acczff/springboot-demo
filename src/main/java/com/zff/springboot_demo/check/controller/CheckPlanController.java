@@ -7,6 +7,9 @@ import com.zff.springboot_demo.check.dto.ReviewRequest;
 import com.zff.springboot_demo.check.entity.CheckItem;
 import com.zff.springboot_demo.check.entity.InventoryCheckPlan;
 import com.zff.springboot_demo.check.service.CheckPlanService;
+import com.zff.springboot_demo.exception.BusinessException;
+import com.zff.springboot_demo.exception.ErrorCode;
+import com.zff.springboot_demo.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +21,11 @@ import java.util.List;
 public class CheckPlanController {
 
     private final CheckPlanService checkPlanService;
+    private final UserService userService;
 
-    public CheckPlanController(CheckPlanService checkPlanService) {
+    public CheckPlanController(CheckPlanService checkPlanService, UserService userService) {
         this.checkPlanService = checkPlanService;
+        this.userService = userService;
     }
 
     /** 主管创建盘点计划（传产品ID列表，系统快照账面数） */
@@ -28,6 +33,11 @@ public class CheckPlanController {
     public Result<InventoryCheckPlan> create(@RequestBody @Valid CreateCheckPlanRequest request,
                                              HttpServletRequest httpRequest) {
         Long createdBy = (Long) httpRequest.getAttribute("currentUserId");
+        boolean isAdmin = userService.getUserRoles(createdBy).stream()
+                .anyMatch(r -> r.getName().equals("ADMIN"));
+        if (!isAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作");
+        }
         return Result.success("创建成功",
                 checkPlanService.create(request.getProductIds(), createdBy));
     }
@@ -59,6 +69,11 @@ public class CheckPlanController {
                                              @RequestBody ReviewRequest request,
                                              HttpServletRequest httpRequest) {
         Long reviewedBy = (Long) httpRequest.getAttribute("currentUserId");
+        boolean isAdmin = userService.getUserRoles(reviewedBy).stream()
+                .anyMatch(r -> r.getName().equals("ADMIN"));
+        if (!isAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作");
+        }
         return Result.success("审核完成，库存已更新",
                 checkPlanService.review(id, reviewedBy, request.getReviewNote()));
     }
