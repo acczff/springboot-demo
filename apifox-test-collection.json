@@ -2,7 +2,7 @@
   "info": {
     "name": "SpringBoot Demo 完整接口测试集",
     "_postman_id": "springboot-demo-full-suite",
-    "description": "覆盖全部模块：认证/用户/角色/权限/菜单/工单/报工/质检/日志/盘点，共52个用例",
+    "description": "覆盖全部模块：认证/用户/角色/权限/菜单/工单/报工/质检/日志/盘点/出库，共64个用例",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -72,6 +72,14 @@
     },
     {
       "key": "checkPlanId2",
+      "value": ""
+    },
+    {
+      "key": "stockOutOrderId",
+      "value": ""
+    },
+    {
+      "key": "invBeforeComplete",
       "value": ""
     }
   ],
@@ -2512,6 +2520,177 @@
             "var r=pm.response.json();",
             "pm.test('start成功', ()=>pm.expect(r.code).to.eql(200));",
             "pm.collectionVariables.set('checkPlanId2Status', r.data.status);"
+          ], "type": "text/javascript"}}]
+        }
+      ]
+    },
+    {
+      "name": "出库模块",
+      "item": [
+        {
+          "name": "出库-S1 非ADMIN创建出库单(应403)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "body": {"mode": "raw", "raw": "{\"items\":[{\"productId\":1,\"quantity\":1}]}"},
+            "url": {"raw": "{{base}}/api/stock-out-orders", "host": ["{{base}}"], "path": ["api","stock-out-orders"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('非ADMIN创建应403', ()=>pm.expect(r.code).to.eql(403));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S2 ADMIN创建出库单",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "body": {"mode": "raw", "raw": "{\"items\":[{\"productId\":1,\"quantity\":1}]}"},
+            "url": {"raw": "{{base}}/api/stock-out-orders", "host": ["{{base}}"], "path": ["api","stock-out-orders"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('创建成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PENDING', ()=>pm.expect(r.data.status).to.eql('PENDING'));",
+            "pm.collectionVariables.set('stockOutOrderId', r.data.id);",
+            "console.log('出库单ID:', r.data.id);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S3 查出库单详情",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('id正确', ()=>pm.expect(r.data.id).to.eql(Number(pm.collectionVariables.get('stockOutOrderId'))));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S4 查出库单明细",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/items", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","items"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('明细不为空', ()=>pm.expect(r.data.length).to.be.at.least(1));",
+            "pm.test('plannedQuantity有值', ()=>pm.expect(r.data[0].plannedQuantity).to.be.a('number'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S5 WORKER拣货 PENDING→PICKING",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/pick", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","pick"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PICKING', ()=>pm.expect(r.data.status).to.eql('PICKING'));",
+            "pm.test('pickedBy有值', ()=>pm.expect(r.data.pickedBy).to.be.a('number'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S6 非ADMIN复核(应403)",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/review", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","review"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('非ADMIN复核应403', ()=>pm.expect(r.code).to.eql(403));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S7 ADMIN复核 PICKING→PENDING_REVIEW",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/review?reviewNote=复核通过", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","review"], "query": [{"key": "reviewNote", "value": "复核通过"}]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态PENDING_REVIEW', ()=>pm.expect(r.data.status).to.eql('PENDING_REVIEW'));",
+            "pm.test('reviewedBy有值', ()=>pm.expect(r.data.reviewedBy).to.be.a('number'));",
+            "pm.test('reviewNote有值', ()=>pm.expect(r.data.reviewNote).to.be.a('string'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S8 非ADMIN确认出库(应403)",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{tokenZff}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/complete", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","complete"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('非ADMIN确认出库应403', ()=>pm.expect(r.code).to.eql(403));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S9 查库存(出库前快照)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inventory", "host": ["{{base}}"], "path": ["api","inventory"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('库存列表不为空', ()=>pm.expect(r.data.length).to.be.at.least(1));",
+            "pm.collectionVariables.set('invBeforeComplete', r.data[0].quantity);",
+            "console.log('出库前库存:', r.data[0].quantity);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S10 ADMIN确认出库 PENDING_REVIEW→COMPLETED",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/stock-out-orders/{{stockOutOrderId}}/complete", "host": ["{{base}}"], "path": ["api","stock-out-orders","{{stockOutOrderId}}","complete"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('出库成功200', ()=>pm.expect(r.code).to.eql(200));",
+            "pm.test('状态COMPLETED', ()=>pm.expect(r.data.status).to.eql('COMPLETED'));",
+            "pm.test('completedAt有值', ()=>pm.expect(r.data.completedAt).to.be.a('string'));"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S11 验证库存已扣减",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base}}/api/inventory", "host": ["{{base}}"], "path": ["api","inventory"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('200', ()=>pm.expect(r.code).to.eql(200));",
+            "var before=Number(pm.collectionVariables.get('invBeforeComplete'));",
+            "pm.test('库存已扣减1', ()=>pm.expect(r.data[0].quantity).to.eql(before-1));",
+            "console.log('出库后库存:', r.data[0].quantity, '预期:', before-1);"
+          ], "type": "text/javascript"}}]
+        },
+        {
+          "name": "出库-S12 库存不足创建应400",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "body": {"mode": "raw", "raw": "{\"items\":[{\"productId\":1,\"quantity\":9999}]}"},
+            "url": {"raw": "{{base}}/api/stock-out-orders", "host": ["{{base}}"], "path": ["api","stock-out-orders"]}
+          },
+          "event": [{"listen": "test", "script": {"exec": [
+            "var r=pm.response.json();",
+            "pm.test('库存不足应400', ()=>pm.expect(r.code).to.eql(400));"
           ], "type": "text/javascript"}}]
         }
       ]
