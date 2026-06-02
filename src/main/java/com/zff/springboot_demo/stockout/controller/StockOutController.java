@@ -68,9 +68,12 @@ public class StockOutController {
         return Result.success("出库完成，库存已扣减", stockOutService.complete(id, userId));
     }
 
-    /** 查出库单列表 */
+    /** 查出库单列表，支持按 status 筛选 */
     @GetMapping
-    public Result<List<StockOutOrder>> list() {
+    public Result<List<StockOutOrder>> list(@RequestParam(required = false) String status) {
+        if (status != null) {
+            return Result.success("查询成功", stockOutService.findByStatus(status));
+        }
         return Result.success("查询成功", stockOutService.findAll());
     }
 

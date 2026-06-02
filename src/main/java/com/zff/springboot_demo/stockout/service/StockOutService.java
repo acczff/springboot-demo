@@ -41,6 +41,11 @@ public class StockOutService {
         return orderRepository.findAll();
     }
 
+    /** 按状态查出库单列表 */
+    public List<StockOutOrder> findByStatus(String status) {
+        return orderRepository.findByStatus(status);
+    }
+
     /** 查出库单明细 */
     public List<StockOutItem> findItems(Long orderId) {
         findById(orderId); // 确认出库单存在
