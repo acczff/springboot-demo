@@ -71,6 +71,20 @@ public class InspectionOrder {
     @Column(name = "created_time", nullable = false)
     private LocalDateTime createdTime;
 
+    /** 最后更新时间 */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        if (updatedAt == null) { updatedAt = LocalDateTime.now(); }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     // -------- getter / setter --------
 
     public Long getId() { return id; }
@@ -117,4 +131,7 @@ public class InspectionOrder {
 
     public LocalDateTime getCreatedTime() { return createdTime; }
     public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

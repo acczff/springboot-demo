@@ -68,6 +68,22 @@ public class RepairOrder {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    /** 最后更新时间 */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) { createdAt = now; }
+        if (updatedAt == null) { updatedAt = now; }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     // -------- getter / setter --------
 
     public Long getId() { return id; }
@@ -111,4 +127,7 @@ public class RepairOrder {
 
     public LocalDateTime getConfirmedAt() { return confirmedAt; }
     public void setConfirmedAt(LocalDateTime confirmedAt) { this.confirmedAt = confirmedAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

@@ -1,6 +1,7 @@
 package com.zff.springboot_demo.workreport.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "work_reports")
@@ -178,4 +179,21 @@ public class WorkReport {
     public void setProductName(String productName) {
         this.productName = productName;
     }
+
+    /** 最后更新时间 */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        if (updatedAt == null) { updatedAt = LocalDateTime.now(); }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

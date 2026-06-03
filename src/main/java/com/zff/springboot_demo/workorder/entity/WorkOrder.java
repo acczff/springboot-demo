@@ -3,6 +3,7 @@ package com.zff.springboot_demo.workorder.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -39,6 +40,30 @@ public class WorkOrder {
     /** 是否已软删除（删除时置为 true，不再出现在查询列表中） */
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
+
+    /** 创建时间 */
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    /** 最后更新时间 */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("items")
@@ -98,6 +123,22 @@ public class WorkOrder {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public List<WorkOrderItem> getItems() {
