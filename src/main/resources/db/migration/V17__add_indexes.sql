@@ -1,0 +1,9 @@
+CREATE INDEX idx_work_reports_work_order_id ON work_reports(work_order_id);
+CREATE INDEX idx_work_reports_reported_by ON work_reports(reported_by);
+CREATE INDEX idx_inspection_orders_work_order_id ON inspection_orders(work_order_id);
+CREATE INDEX idx_inspection_orders_inspector_id ON inspection_orders(inspector_id);
+CREATE INDEX idx_repair_orders_repairer_id ON repair_orders(repairer_id);
+CREATE INDEX idx_stock_in_orders_created_by ON stock_in_orders(created_by);
+CREATE INDEX idx_check_items_plan_id ON check_items(plan_id);
+CREATE INDEX idx_stock_out_items_order_id ON stock_out_items(order_id);
+CREATE INDEX idx_users_username ON users(username);

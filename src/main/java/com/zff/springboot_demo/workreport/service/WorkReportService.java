@@ -29,7 +29,7 @@ public class WorkReportService {
     }
 
     public Page<WorkReport> findByWorkOrderId(Long workOrderId, Pageable pageable) {
-        return workReportRepository.findByWorkOrderIdAndDeletedFalse(workOrderId, pageable);
+        return workReportRepository.findByWorkOrder(workOrderId, pageable);
     }
 
     public WorkReport findById(Long id) {

@@ -3,6 +3,8 @@ package com.zff.springboot_demo.workreport.repository;
 import com.zff.springboot_demo.workreport.entity.WorkReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,7 +14,10 @@ import java.util.List;
 public interface WorkReportRepository extends JpaRepository<WorkReport, Long> {
 
     /** 按工单 ID 分页查询（主管视角：查某张工单下所有报工记录，排除已软删除） */
-    Page<WorkReport> findByWorkOrderIdAndDeletedFalse(Long workOrderId, Pageable pageable);
+    // 用 @Query 改写（SQL 写明，方法名只是标签）:
+    @Query("SELECT w FROM WorkReport w WHERE w.workOrderId = :workOrderId AND w.deleted = false")
+    Page<WorkReport> findByWorkOrder(@Param("workOrderId") Long workOrderId, Pageable pageable);
+//    Page<WorkReport> findByWorkOrderIdAndDeletedFalse(Long workOrderId, Pageable pageable);
 
     /** 按工单 ID 全量查询（级联软删除专用，不分页） */
     List<WorkReport> findByWorkOrderIdAndDeletedFalse(Long workOrderId);
