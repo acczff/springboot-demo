@@ -43,6 +43,26 @@ public class StockInOrder {
     @Column(name = "shelved_at")
     private LocalDateTime shelvedAt;
 
+    /** 最后更新时间 */
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -66,4 +86,12 @@ public class StockInOrder {
 
     public LocalDateTime getShelvedAt() { return shelvedAt; }
     public void setShelvedAt(LocalDateTime shelvedAt) { this.shelvedAt = shelvedAt; }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
