@@ -139,6 +139,7 @@ public class StockOutService {
                         "产品 " + item.getProductId() + " 库存不足，无法出库。当前库存: " + inv.getQuantity());
             }
             inv.setQuantity(inv.getQuantity() - item.getPlannedQuantity());
+            inv.setUpdatedAt(LocalDateTime.now());
             inventoryRepository.save(inv);
         }
 
