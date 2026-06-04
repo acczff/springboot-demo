@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,26 +56,19 @@ public class MenuService {
     public List<Menu> getMenuTreeCached(List<String> userRoles) {
         String key = "menus:tree:" + String.join(",", userRoles);
         try {
-            // ① 查 Redis
             String cached = redisTemplate.opsForValue().get(key);
             if (cached == null) {
-                // ② cache miss：查 DB
                 List<Menu> menus = getMenuTree(userRoles);
-
-                // ③ 序列化成 JSON 字符串
                 String json = objectMapper.writeValueAsString(menus);
-
-                // ④ 写入 Redis，TTL 3600 秒
-                redisTemplate.opsForValue().set(key, json, 3600, TimeUnit.SECONDS);
-
+                long jitter = menus.isEmpty() ? ThreadLocalRandom.current().nextInt(30)
+                        : ThreadLocalRandom.current().nextInt(600);
+                long ttl = menus.isEmpty() ? 60 : 3600;
+                redisTemplate.opsForValue().set(key, json, ttl + jitter, TimeUnit.SECONDS);
                 return menus;
             } else {
-                // ⑤ cache hit：JSON 反序列化回 List<Menu>
-                // TypeReference 用来在运行时保住泛型信息，List<Menu>.class 写不出来
                 return objectMapper.readValue(cached, new TypeReference<List<Menu>>() {});
             }
         } catch (Exception e) {
-            // ⑥ 降级：Redis 不可用 或 序列化失败，直接查 DB
             return getMenuTree(userRoles);
         }
     }
