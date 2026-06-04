@@ -50,7 +50,7 @@ public class MenuController {
             }
         }
 
-        List<Menu> menus = menuService.getMenuTree(userRoles);
-        return Result.success("menus getMenuTree success", menus);
+        List<Menu> menus = menuService.getMenuTreeCached(userRoles);
+        return Result.success("menus getMenuTreeCached success", menus);
     }
 }
