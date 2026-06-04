@@ -16,7 +16,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate  # 自动校验表结构（开发环境使用）
-    show-sql: true       # 控制台显示 SQL（学习用）
+    show-sql: false      # 生产关闭，调试时改为 true
     properties:
       hibernate:
         format_sql: true  # 格式化 SQL 输出
