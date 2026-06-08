@@ -75,6 +75,7 @@ public class MenuService {
 
     public void evictMenuCache() {
         // 菜单数据变更时调用，删除所有角色的菜单缓存（模式匹配）
+        // TODO: 当前还没有菜单 CRUD 接口，后续新增/修改/删除菜单时必须调用它。
         var keys = redisTemplate.keys("menus:tree:*");
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);

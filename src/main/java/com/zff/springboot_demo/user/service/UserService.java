@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -211,7 +212,8 @@ public class UserService {
                 User user = findById(userId);
                 LoginResponse resp = buildLoginResponse(user, null);
                 String json = objectMapper.writeValueAsString(resp);
-                redisTemplate.opsForValue().set(key, json, 1800, TimeUnit.SECONDS);
+                long ttl = 1800 + ThreadLocalRandom.current().nextInt(300);
+                redisTemplate.opsForValue().set(key, json, ttl, TimeUnit.SECONDS);
                 return resp;
             } else {
                 // cache hit：直接反序列化返回
