@@ -1,5 +1,5 @@
 # 第一阶段：构建阶段 (使用 Maven 镜像)
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/maven:3.9.6-eclipse-temurin-21 AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /build
 
 # 利用 Docker 层缓存：先复制 pom.xml 并下载依赖
@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # 第二阶段：运行阶段 (使用轻量级 JDK 镜像)
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # 从构建阶段(builder)将打包好的 jar 复制到运行阶段

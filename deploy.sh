@@ -7,7 +7,7 @@ echo "🚀 开始自动化部署流程"
 echo "==================================="
 
 echo "1. 从 GitHub 拉取最新代码..."
-git pull origin master
+git pull origin master || echo "⚠️  git pull 失败（网络问题），将使用本地已有代码构建"
 
 echo "2. 重新构建并重启 Docker 容器..."
 # --build: 强制重新构建镜像，Docker 会自动利用层缓存（比如只要 pom.xml 没变，就不需要重新下载依赖）
