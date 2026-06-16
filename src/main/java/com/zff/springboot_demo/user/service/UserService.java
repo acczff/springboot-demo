@@ -57,6 +57,15 @@ public class UserService {
     }
 
     /**
+     * 判断用户是否为 ADMIN 角色。
+     */
+    public boolean isAdmin(Long userId) {
+        User user = findById(userId);
+        return user.getRoles().stream()
+                .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getName()));
+    }
+
+    /**
      * 根据 username 查找用户
      * @param username 用户名
      * @return 用户对象
@@ -152,14 +161,54 @@ public class UserService {
     }
 
     /**
-     * 登录校验：账号密码验证，返回登录响应。
+     * 登录校验：账号密码验证 + Redis 限速防暴力破解。
+     *
+     * 限速规则：
+     * - 同一账号 5 分钟内连续 5 次密码错误 → 锁定，返回 429
+     * - 登录成功 → 清除失败计数
      */
+    private static final String LOGIN_FAIL_PREFIX = "login:fail:";
+    private static final int MAX_FAIL_COUNT = 5;           // 最大允许失败次数
+    private static final int LOCK_MINUTES = 5;             // 锁定时间（分钟）
+
     public LoginResponse login(LoginRequest request) {
+        String failKey = LOGIN_FAIL_PREFIX + request.getAccount();
+
+        // 1. 先检查是否已被锁定
+        String failCountStr = redisTemplate.opsForValue().get(failKey);
+        int failCount = (failCountStr != null) ? Integer.parseInt(failCountStr) : 0;
+        if (failCount >= MAX_FAIL_COUNT) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS,
+                    "登录失败次数过多，请 " + LOCK_MINUTES + " 分钟后重试");
+        }
+
+        // 2. 查用户
         User user = findByUsername(request.getAccount());
-        if (user == null) throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号不存在");
-        if (!PasswordEncoder.matches(request.getPassword(), user.getPassword()))
+        if (user == null) {
+            incrementFailCount(failKey);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号不存在");
+        }
+
+        // 3. 校验密码
+        if (!PasswordEncoder.matches(request.getPassword(), user.getPassword())) {
+            incrementFailCount(failKey);
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "密码错误");
+        }
+
+        // 4. 登录成功 → 清除失败计数
+        redisTemplate.delete(failKey);
         return buildLoginResponse(user, TokenUtil.generateToken(user.getId()));
+    }
+
+    /**
+     * 失败计数 +1，首次失败时设置过期时间。
+     */
+    private void incrementFailCount(String failKey) {
+        Long count = redisTemplate.opsForValue().increment(failKey);
+        if (count != null && count == 1) {
+            // 第一次失败，设置过期时间
+            redisTemplate.expire(failKey, LOCK_MINUTES, TimeUnit.MINUTES);
+        }
     }
 
     /**

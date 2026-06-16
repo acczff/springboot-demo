@@ -3,6 +3,13 @@ package com.zff.springboot_demo.workorder.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +18,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "work_orders")
+@EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE work_orders SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class WorkOrder {
 
     @Id
@@ -25,7 +35,8 @@ public class WorkOrder {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "DRAFT";
 
-    @Column(name = "created_by", nullable = false)
+    @CreatedBy
+    @Column(name = "created_by", updatable = false)
     private Long createdBy;             // 创建人用户ID（关联 users 表的 id）
 
     @Column(name = "created_time", nullable = false)
@@ -42,28 +53,16 @@ public class WorkOrder {
     private Boolean deleted = false;
 
     /** 创建时间 */
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     /** 最后更新时间 */
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-    }
 
-    @PreUpdate
-    public void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("items")

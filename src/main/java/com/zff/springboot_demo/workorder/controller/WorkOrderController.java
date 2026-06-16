@@ -5,6 +5,7 @@ import com.zff.springboot_demo.dto.PageResult;
 import com.zff.springboot_demo.workorder.dto.WorkOrderCreateRequest;
 import com.zff.springboot_demo.workorder.entity.WorkOrder;
 import com.zff.springboot_demo.workorder.service.WorkOrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -71,23 +72,27 @@ public class WorkOrderController {
      * @return 下发后的工单
      */
     @PutMapping("/{id}/issue")
-    public Result<WorkOrder> issue(@PathVariable Long id) {
-        return Result.success("下发成功", workOrderService.issue(id));
+    public Result<WorkOrder> issue(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        return Result.success("下发成功", workOrderService.issue(id, currentUserId));
     }
 
     @PutMapping("/{id}/start")
-    public Result<WorkOrder> start(@PathVariable Long id) {
-        return Result.success("开始生产", workOrderService.start(id));
+    public Result<WorkOrder> start(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        return Result.success("开始生产", workOrderService.start(id, currentUserId));
     }
 
     @PutMapping("/{id}/complete")
-    public Result<WorkOrder> complete(@PathVariable Long id) {
-        return Result.success("完工", workOrderService.complete(id));
+    public Result<WorkOrder> complete(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        return Result.success("完工", workOrderService.complete(id, currentUserId));
     }
 
     @PutMapping("/{id}/cancel")
-    public Result<WorkOrder> cancel(@PathVariable Long id) {
-        return Result.success("已取消", workOrderService.cancel(id));
+    public Result<WorkOrder> cancel(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        return Result.success("已取消", workOrderService.cancel(id, currentUserId));
     }
 
     /**
@@ -95,8 +100,9 @@ public class WorkOrderController {
      * @param id 工单主键
      */
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
-        workOrderService.softDelete(id);
+    public Result<Void> delete(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("currentUserId");
+        workOrderService.softDelete(id, currentUserId);
         return Result.success("删除成功");
     }
 }

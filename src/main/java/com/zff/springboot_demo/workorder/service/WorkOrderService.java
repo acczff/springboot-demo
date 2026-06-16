@@ -1,5 +1,8 @@
 package com.zff.springboot_demo.workorder.service;
 
+import com.zff.springboot_demo.exception.BusinessException;
+import com.zff.springboot_demo.exception.ErrorCode;
+
 import com.zff.springboot_demo.user.entity.User;
 import com.zff.springboot_demo.user.service.UserService;
 import com.zff.springboot_demo.workorder.dto.WorkOrderCreateRequest;
@@ -42,9 +45,9 @@ public class WorkOrderService {
      */
     public Page<WorkOrder> findByStatus(String status, Pageable pageable) {
         if(status == null || status.isBlank()){
-            return workOrderRepository.findByDeletedFalse(pageable);
+            return workOrderRepository.findAll(pageable);
         }
-        return workOrderRepository.findByStatusAndDeletedFalse(status, pageable);
+        return workOrderRepository.findByStatus(status, pageable);
     }
 
     public WorkOrder findById(Long id) {
@@ -67,12 +70,13 @@ public class WorkOrderService {
     }
 
     /**
-     * 下发草稿工单，只有 DRAFT 状态允许下发。
+     * 下发草稿工单，只有 DRAFT 状态 + 创建人/ADMIN 允许下发。
      */
-    public WorkOrder issue(Long id) {
+    public WorkOrder issue(Long id, Long currentUserId) {
         WorkOrder workOrder = this.findById(id);
+        checkOwnership(workOrder, currentUserId);
         if (!"DRAFT".equals(workOrder.getStatus())) {
-            throw new RuntimeException("只有草稿状态的工单才能下发");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "只有草稿状态的工单才能下发");
         }
         workOrder.setStatus("ISSUED");
         return workOrderRepository.save(workOrder);
@@ -85,7 +89,6 @@ public class WorkOrderService {
         workOrder.setName(request.getName());
         workOrder.setCreatedTime(System.currentTimeMillis());
         workOrder.setStatus("DRAFT");
-        workOrder.setCreatedBy(request.getCreatedBy());
         workOrder.setCreatedByName(creator.getUsername());
         this.create(workOrder);
         request.getWorkOrderItemRequests().forEach(item -> {
@@ -100,37 +103,53 @@ public class WorkOrderService {
     }
 
     @Transactional
-    public void softDelete(Long id) {
+    public void softDelete(Long id, Long currentUserId) {
         WorkOrder workOrder = this.findById(id);
-        workOrder.setDeleted(true);
-        workOrderRepository.save(workOrder);
+        checkOwnership(workOrder, currentUserId);
+        workOrderRepository.deleteById(id); // JPA 会自动拦截并执行 @SQLDelete
         workReportService.softDeleteByWorkOrderId(id);
     }
 
-    public WorkOrder start(Long id) {
+    public WorkOrder start(Long id, Long currentUserId) {
         WorkOrder workOrder = this.findById(id);
+        checkOwnership(workOrder, currentUserId);
         if (!"ISSUED".equals(workOrder.getStatus())) {
-            throw new RuntimeException("只有已下发状态的工单才能开始生产，当前状态：" + workOrder.getStatus());
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "只有已下发状态的工单才能开始生产，当前状态：" + workOrder.getStatus());
         }
         workOrder.setStatus("IN_PROGRESS");
         return workOrderRepository.save(workOrder);
     }
 
-    public WorkOrder complete(Long id) {
+    public WorkOrder complete(Long id, Long currentUserId) {
         WorkOrder workOrder = this.findById(id);
+        checkOwnership(workOrder, currentUserId);
         if (!"IN_PROGRESS".equals(workOrder.getStatus())) {
-            throw new RuntimeException("只有生产中的工单才能完工，当前状态：" + workOrder.getStatus());
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "只有生产中的工单才能完工，当前状态：" + workOrder.getStatus());
         }
         workOrder.setStatus("COMPLETED");
         return workOrderRepository.save(workOrder);
     }
 
-    public WorkOrder cancel(Long id) {
+    public WorkOrder cancel(Long id, Long currentUserId) {
         WorkOrder workOrder = this.findById(id);
+        checkOwnership(workOrder, currentUserId);
         if (!"ISSUED".equals(workOrder.getStatus()) && !"IN_PROGRESS".equals(workOrder.getStatus())) {
-            throw new RuntimeException("只有已下发或生产中的工单才能取消，当前状态：" + workOrder.getStatus());
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "只有已下发或生产中的工单才能取消，当前状态：" + workOrder.getStatus());
         }
         workOrder.setStatus("CANCELLED");
         return workOrderRepository.save(workOrder);
+    }
+
+    /**
+     * 越权检查：只有工单创建人或 ADMIN 才能操作。
+     * 防止水平越权（用户 A 操作用户 B 的工单）。
+     */
+    private void checkOwnership(WorkOrder workOrder, Long currentUserId) {
+        if (!workOrder.getCreatedBy().equals(currentUserId) && !userService.isAdmin(currentUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作此工单");
+        }
     }
 }
