@@ -25,16 +25,24 @@ services:
 
   app:                         # 后端 Spring Boot 服务
     build: .
-    ports:
-      - "8080:8080"
-    restart: unless-stopped    # 异常退出时自动重启
+    expose:
+      - "8080"                 # 只在 Docker 内部网络暴露，不映射到宿主机（由 Nginx 转发）
+    restart: unless-stopped
     depends_on:
       db:
-        condition: service_healthy    # 等 MySQL 健康检查通过后再启动 app
+        condition: service_healthy
       redis:
-        condition: service_healthy    # 等 Redis 健康检查通过后再启动 app
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
-      SPRING_DATA_REDIS_HOST: redis   # 覆盖 application.yml 中的 localhost
+      SPRING_DATA_REDIS_HOST: redis
+
+  web:                         # 前端 Nginx 服务（统一入口）
+    build: ../springboot-web   # 用前端项目目录的 Dockerfile 构建
+    ports:
+      - "80:80"                # 用户通过 80 端口访问，这是唯一的对外入口
+    restart: unless-stopped
+    depends_on:
+      - app                    # 等后端启动后再启动 Nginx
