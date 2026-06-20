@@ -16,7 +16,7 @@
     },
     {
       "key": "adminUserId",
-      "value": "6"
+      "value": "1"
     },
     {
       "key": "newUserId",
@@ -44,6 +44,10 @@
     },
     {
       "key": "reportWorkOrderId",
+      "value": ""
+    },
+    {
+      "key": "reportWorkOrderItemId",
       "value": ""
     },
     {
@@ -1528,7 +1532,8 @@
                   "var r=pm.response.json();",
                   "pm.test('创建成功200',()=>pm.expect(r.code).to.eql(200));",
                   "pm.collectionVariables.set('reportWorkOrderId',r.data.id);",
-                  "console.log('报工测试工单ID:',r.data.id);"
+                  "if(r.data.items && r.data.items.length>0) pm.collectionVariables.set('reportWorkOrderItemId', r.data.items[0].id);",
+                  "console.log('工单ID:',r.data.id);"
                 ],
                 "type": "text/javascript"
               }
@@ -1588,7 +1593,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"workOrderId\":{{reportWorkOrderId}},\"reportedQty\":88}"
+              "raw": "{\"workOrderId\":{{reportWorkOrderId}},\"workOrderItemId\":{{reportWorkOrderItemId}},\"reportedQty\":88}"
             },
             "url": {
               "raw": "{{base}}/api/work-reports",

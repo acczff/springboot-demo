@@ -1,0 +1,2 @@
+DROP INDEX idx_inspection_orders_work_order_id ON inspection_orders;
+DROP INDEX idx_stock_out_items_order_id ON stock_out_items;

@@ -23,6 +23,17 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:                    # RabbitMQ 消息队列
+    image: rabbitmq:3.13-management
+    ports:
+      - "5673:5672"            # 通信端口
+      - "15673:15672"          # 控制台端口
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   app:                         # 后端 Spring Boot 服务
     build: .
     expose:
@@ -33,11 +44,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
       SPRING_DATA_REDIS_HOST: redis
+      SPRING_RABBITMQ_HOST: rabbitmq
 
   web:                         # 前端 Nginx 服务（统一入口）
     build: ../springboot-web   # 用前端项目目录的 Dockerfile 构建

@@ -11,6 +11,7 @@
 	<groupId>com.accfff</groupId>
 	<artifactId>springboot-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 	<name/>
 	<description/>
 	<url/>
@@ -29,6 +30,12 @@
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+	
+	<modules>
+		<module>springboot-demo-user</module>
+		<module>springboot-demo-biz</module>
+	</modules>
+
 	<dependencies>
 		<!-- 基础依赖 -->
 		<dependency>
@@ -83,15 +90,23 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
+
+		<!-- RabbitMQ Spring Boot Starter (用于 Day200 异步解耦) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
     </dependencies>
 
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 </project>
