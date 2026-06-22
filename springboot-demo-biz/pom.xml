@@ -13,6 +13,11 @@
     <description>MES Business Microservice</description>
 
     <dependencies>
+        <!-- Web starter for REST endpoints -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
         <!-- OpenFeign for Remote Procedure Calls -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

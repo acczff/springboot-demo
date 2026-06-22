@@ -7,16 +7,17 @@
         <artifactId>springboot-demo</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>springboot-demo-user</artifactId>
+    <artifactId>springboot-demo-gateway</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>springboot-demo-user</name>
-    <description>User &amp; Permission Microservice</description>
+    <name>springboot-demo-gateway</name>
+    <description>Spring Cloud API Gateway</description>
 
     <dependencies>
-        <!-- Web starter for REST endpoints -->
+        <!-- Spring Cloud Gateway Starter -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+            <version>4.1.3</version>
         </dependency>
     </dependencies>
 

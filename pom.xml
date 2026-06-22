@@ -34,6 +34,7 @@
 	<modules>
 		<module>springboot-demo-user</module>
 		<module>springboot-demo-biz</module>
+		<module>springboot-demo-gateway</module>
 	</modules>
 
 	<dependencies>
@@ -48,11 +49,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- Web依赖 -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
+
 		<!-- MySQL 驱动 -->
 		<dependency>
 			<groupId>com.mysql</groupId>
