@@ -23,7 +23,7 @@ else
 fi
 
 echo "3. 构建并启动 Docker Compose 服务..."
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 
 echo "4. 当前服务状态:"
 docker compose ps

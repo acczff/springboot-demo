@@ -1,6 +1,10 @@
 services:
   db:
     image: mysql:8.0
+    command:
+      - --performance-schema=OFF
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=50
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: springboot_demo
