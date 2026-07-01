@@ -52,7 +52,7 @@ public class UserService {
      * @return 用户对象
      */
     public User findById(Long id)    {
-        return userRepository.findById(id)
+        return userRepository.findWithRolesById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "用户不存在"));
     }
 
@@ -71,7 +71,7 @@ public class UserService {
      * @return 用户对象
      */
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
+        return userRepository.findWithRolesByUsername(username);
     }
 
     /**

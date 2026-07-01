@@ -3,8 +3,11 @@ package com.zff.springboot_demo.user.repository;
 import com.zff.springboot_demo.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 /**
  * 用户数据访问层
@@ -20,6 +23,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 用户对象
      */
     User findByUsername(String username);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    User findWithRolesByUsername(String username);
+
+    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    Optional<User> findWithRolesById(Long id);
 
     /**
      * 根据邮箱查找用户
