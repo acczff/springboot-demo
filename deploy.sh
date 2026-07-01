@@ -1,30 +1,39 @@
-#!/bin/bash
-# 进入脚本所在的目录 (确保在项目根目录下执行)
-cd "$(dirname "$0")"
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FRONTEND_DIR="${FRONTEND_DIR:-"$ROOT_DIR/../springboot-web"}"
+BRANCH="${DEPLOY_BRANCH:-master}"
+
+cd "$ROOT_DIR"
 
 echo "==================================="
-echo "🚀 开始自动化部署流程（前后端）"
+echo "开始后端自动化部署"
+echo "部署分支: $BRANCH"
 echo "==================================="
 
 echo "1. 拉取后端最新代码..."
-git pull origin master || echo "⚠️  后端 git pull 失败，将使用本地已有代码构建"
+git pull origin "$BRANCH"
 
-echo "2. 拉取前端最新代码..."
-cd ../springboot-web
-git pull origin master || echo "⚠️  前端 git pull 失败，将使用本地已有代码构建"
-cd ../springboot-demo
+if [ -d "$FRONTEND_DIR/.git" ]; then
+  echo "2. 拉取前端最新代码..."
+  git -C "$FRONTEND_DIR" pull origin "$BRANCH"
+else
+  echo "2. 未找到前端仓库: $FRONTEND_DIR，跳过前端拉取。"
+fi
 
-echo "3. 重新构建并重启所有容器..."
-# --build: 强制重新构建镜像（Docker 层缓存会自动跳过没变的部分）
-# -d: 后台运行
+echo "3. 构建并启动 Docker Compose 服务..."
 docker compose up -d --build
 
+echo "4. 当前服务状态:"
+docker compose ps
+
 echo "==================================="
-echo "✅ 部署已完成！所有服务已在后台运行。"
+echo "部署完成"
+echo "前端入口:   http://<服务器IP> 或已配置的域名"
+echo "网关接口:   http://<服务器IP>:8080"
+echo "后端服务:   gateway, user-service, biz-service, db, redis, rabbitmq"
 echo ""
-echo "  前端入口:  http://服务器IP (端口80)"
-echo "  后端API:   通过 Nginx 代理 /api/"
-echo ""
-echo "  查看日志:  docker compose logs -f"
-echo "  查看状态:  docker compose ps"
+echo "查看日志:   docker compose logs -f gateway user-service biz-service"
+echo "查看状态:   docker compose ps"
 echo "==================================="

@@ -8,4 +8,6 @@ import java.util.List;
 public interface StockOutItemRepository extends JpaRepository<StockOutItem, Long> {
 
     List<StockOutItem> findByOrderId(Long orderId);
+
+    boolean existsByProductId(Long productId);
 }

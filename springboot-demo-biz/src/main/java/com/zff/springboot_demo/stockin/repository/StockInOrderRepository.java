@@ -12,4 +12,6 @@ public interface StockInOrderRepository extends JpaRepository<StockInOrder, Long
     Page<StockInOrder> findByCreatedBy(Long createdBy, Pageable pageable);
 
     Page<StockInOrder> findByCreatedByAndStatus(Long createdBy, String status, Pageable pageable);
+
+    boolean existsByProductId(Long productId);
 }

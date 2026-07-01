@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   cloud:
@@ -18,14 +18,12 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
       routes:
-        # Route 1: User Service (8081)
         - id: user-service
-          uri: http://localhost:8081
+          uri: ${APP_USER_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/api/auth/**, /api/users/**, /api/roles/**, /api/permissions/**, /api/menus/**, /api/logs/**
-        
-        # Route 2: Biz Service (8082) - Catch All
+
         - id: biz-service
-          uri: http://localhost:8082
+          uri: ${APP_BIZ_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/api/**, /cache-drill/**

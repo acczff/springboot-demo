@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WorkOrderItemRepository extends CrudRepository<WorkOrderItem,Long> {
+
+    boolean existsByProductId(Long productId);
 }

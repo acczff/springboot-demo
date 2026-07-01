@@ -1,43 +1,45 @@
 services:
-
-  db:                          # MySQL 数据库服务
+  db:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: springboot_demo
     ports:
-      - "3307:3306"            # 宿主机3307→容器3306（避免和服务器本地MySQL冲突）
+      - "3307:3306"
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  redis:                       # Redis 缓存服务
+  redis:
     image: redis:7-alpine
     ports:
-      - "6380:6379"            # 宿主机6380→容器6379
+      - "6380:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  rabbitmq:                    # RabbitMQ 消息队列
+  rabbitmq:
     image: rabbitmq:3.13-management
     ports:
-      - "5673:5672"            # 通信端口
-      - "15673:15672"          # 控制台端口
+      - "5673:5672"
+      - "15673:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  app:                         # 后端 Spring Boot 服务
-    build: .
+  user-service:
+    build:
+      context: .
+      args:
+        MODULE: springboot-demo-user
     expose:
-      - "8080"                 # 只在 Docker 内部网络暴露，不映射到宿主机（由 Nginx 转发）
+      - "8081"
     restart: unless-stopped
     depends_on:
       db:
@@ -47,16 +49,72 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
       SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
 
-  web:                         # 前端 Nginx 服务（统一入口）
-    build: ../springboot-web   # 用前端项目目录的 Dockerfile 构建
-    ports:
-      - "80:80"                # 用户通过 80 端口访问，这是唯一的对外入口
+  biz-service:
+    build:
+      context: .
+      args:
+        MODULE: springboot-demo-biz
+    expose:
+      - "8082"
     restart: unless-stopped
     depends_on:
-      - app                    # 等后端启动后再启动 Nginx
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springboot_demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      APP_USER_SERVICE_URL: http://user-service:8081
+
+  gateway:
+    build:
+      context: .
+      args:
+        MODULE: springboot-demo-gateway
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      user-service:
+        condition: service_started
+      biz-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8080
+      APP_USER_SERVICE_URI: http://user-service:8081
+      APP_BIZ_SERVICE_URI: http://biz-service:8082
+    networks:
+      default:
+        aliases:
+          - app
+
+  web:
+    build: ../springboot-web
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_started
