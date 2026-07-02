@@ -24,10 +24,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     User findByUsername(String username);
 
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @EntityGraph(attributePaths = {"roles"})
     User findWithRolesByUsername(String username);
 
-    @EntityGraph(attributePaths = {"roles", "roles.permissions"})
+    @EntityGraph(attributePaths = {"roles"})
     Optional<User> findWithRolesById(Long id);
 
     /**
