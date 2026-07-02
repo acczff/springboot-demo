@@ -32,11 +32,11 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.13-management
-    mem_limit: 384m
-    cpus: "0.50"
+    mem_limit: 512m
+    cpus: "0.60"
     environment:
-      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "+S 1:1 +sbwt none +sbwtdcpu none +sbwtdio none"
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "0.4"
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "+S 1:1 +sbwt none +sbwtdcpu none +sbwtdio none +hmqd off_heap"
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK_ABSOLUTE: 256MB
     ports:
       - "5673:5672"
       - "15673:15672"
