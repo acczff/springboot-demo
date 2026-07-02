@@ -53,6 +53,8 @@ services:
         MODULE: springboot-demo-user
     expose:
       - "8081"
+    ports:
+      - "127.0.0.1:8081:8081"
     mem_limit: 384m
     cpus: "0.60"
     restart: unless-stopped
@@ -83,6 +85,8 @@ services:
         MODULE: springboot-demo-biz
     expose:
       - "8082"
+    ports:
+      - "127.0.0.1:8082:8082"
     mem_limit: 512m
     cpus: "0.70"
     restart: unless-stopped
