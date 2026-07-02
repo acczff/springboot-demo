@@ -3,6 +3,8 @@ FROM maven:3.9-eclipse-temurin-21 AS builder
 ARG MODULE
 WORKDIR /build
 
+ENV MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=256m -Djava.awt.headless=true"
+
 COPY pom.xml ./
 COPY springboot-demo-user/pom.xml springboot-demo-user/pom.xml
 COPY springboot-demo-biz/pom.xml springboot-demo-biz/pom.xml
@@ -20,6 +22,8 @@ FROM eclipse-temurin:21-jre
 
 ARG MODULE
 WORKDIR /app
+
+ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -Djava.security.egd=file:/dev/./urandom"
 
 COPY --from=builder /build/${MODULE}/target/*.jar app.jar
 

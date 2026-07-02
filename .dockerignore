@@ -1,0 +1,13 @@
+.git
+.idea
+.agents
+.mvn
+target
+**/target
+uploads
+*.log
+*.tmp
+apifox-*.json
+docs
+HELP.md
+README.md
